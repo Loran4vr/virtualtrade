@@ -10,7 +10,7 @@ from config import config
 load_dotenv()
 
 def create_app(config_name='default'):
-    app = Flask(__name__, static_folder='static', static_url_path='/static')
+    app = Flask(__name__, static_folder='.', static_url_path='')
     
     # Load configuration
     app.config.from_object(config[config_name])
