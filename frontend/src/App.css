@@ -38,3 +38,38 @@
 }
 
 /* User's App.css content */
+
+body {
+  background: #f3f4f6;
+  color: #222;
+}
+
+.bg-card {
+  background: #fff;
+}
+
+.dark .bg-card {
+  background: #18181b;
+}
+
+.text-accent {
+  color: #2563eb;
+}
+
+.font-bold-lg {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+/* Add more modern spacing and shadow for cards */
+.card {
+  box-shadow: 0 2px 16px 0 rgba(0,0,0,0.06);
+  border-radius: 1rem;
+  background: #fff;
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+}
+
+.dark .card {
+  background: #18181b;
+}
