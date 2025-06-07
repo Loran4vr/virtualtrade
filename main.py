@@ -23,11 +23,6 @@ def create_app(config_name='default'):
     app.register_blueprint(market_data_bp, url_prefix='/api/market')
     app.register_blueprint(portfolio_bp, url_prefix='/api/portfolio')
     
-    # Serve static files (frontend)
-    @app.route('/static/<path:filename>')
-    def static_files(filename):
-        return send_from_directory(app.static_folder, filename)
-
     # Catch-all route for React Router (only for non-static, non-api, non-auth)
     @app.route('/', defaults={'path': ''})
     @app.route('/<path:path>')
