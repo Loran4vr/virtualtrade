@@ -1,7 +1,7 @@
 # Use Node.js for building frontend
 FROM node:18-alpine as frontend-builder
 
-WORKDIR /app/frontend
+WORKDIR /app
 
 # Copy frontend files
 COPY . .
@@ -24,7 +24,7 @@ RUN apt-get update && apt-get install -y \
 COPY . .
 
 # Copy built frontend files
-COPY --from=frontend-builder /app/frontend/dist /app/static
+COPY --from=frontend-builder /app/dist /app/static
 
 # Create and activate virtual environment
 RUN python -m venv venv
