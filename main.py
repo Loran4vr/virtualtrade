@@ -1,9 +1,9 @@
 from flask import Flask, render_template, send_from_directory, jsonify
 import os
 from dotenv import load_dotenv
-from src.routes.auth import auth_bp, init_google_oauth
-from src.routes.market_data import market_data_bp
-from src.routes.portfolio import portfolio_bp
+from auth import auth_bp, init_google_oauth
+from market_data import market_data_bp
+from portfolio import portfolio_bp
 from config import config
 
 # Load environment variables
