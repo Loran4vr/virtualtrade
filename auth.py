@@ -8,7 +8,8 @@ auth_bp = Blueprint('auth', __name__)
 def init_google_oauth(app):
     """Initialize Google OAuth with Flask-Dance"""
     # Set environment variables for development
-    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+    if app.config.get('DEBUG'):
+        os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
     os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
     
     # Create and register the Google blueprint
@@ -16,7 +17,8 @@ def init_google_oauth(app):
         client_id=app.config.get('GOOGLE_CLIENT_ID'),
         client_secret=app.config.get('GOOGLE_CLIENT_SECRET'),
         scope=["profile", "email"],
-        redirect_to="auth.callback"
+        redirect_to="auth.callback",
+        authorized_url="/google/authorized"  # This ensures consistent redirect URI
     )
     app.register_blueprint(google_bp, url_prefix="/login")
 
