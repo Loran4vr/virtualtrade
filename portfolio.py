@@ -45,8 +45,16 @@ def get_balance():
     
     user_id = session['user']['id']
     
+    # Auto-initialize portfolio if not found
     if user_id not in portfolios:
-        return jsonify({'error': 'Portfolio not found'}), 404
+        initial_balance = 1000000  # 10 Lakh INR
+        portfolios[user_id] = {
+            'cash_balance': initial_balance,
+            'holdings': {},
+            'created_at': datetime.now().isoformat(),
+            'last_updated': datetime.now().isoformat()
+        }
+        transactions[user_id] = []
     
     return jsonify({
         'cash_balance': portfolios[user_id]['cash_balance']
@@ -60,8 +68,16 @@ def get_holdings():
     
     user_id = session['user']['id']
     
+    # Auto-initialize portfolio if not found
     if user_id not in portfolios:
-        return jsonify({'error': 'Portfolio not found'}), 404
+        initial_balance = 1000000  # 10 Lakh INR
+        portfolios[user_id] = {
+            'cash_balance': initial_balance,
+            'holdings': {},
+            'created_at': datetime.now().isoformat(),
+            'last_updated': datetime.now().isoformat()
+        }
+        transactions[user_id] = []
     
     return jsonify({
         'holdings': portfolios[user_id]['holdings']
