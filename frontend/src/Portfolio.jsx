@@ -158,8 +158,8 @@ export default function Portfolio() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between gap-4">
-        <Card className="flex-1">
+      <div className="flex flex-col gap-4 md:flex-row md:justify-between md:gap-4">
+        <Card className="flex-1 min-w-0">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Total Portfolio Value</CardTitle>
             <CardDescription>
@@ -175,7 +175,7 @@ export default function Portfolio() {
             </p>
           </CardContent>
         </Card>
-        <Card className="flex-1">
+        <Card className="flex-1 min-w-0">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Cash Balance</CardTitle>
             <CardDescription>
@@ -191,7 +191,7 @@ export default function Portfolio() {
             </p>
           </CardContent>
         </Card>
-        <Card className="flex-1">
+        <Card className="flex-1 min-w-0">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Holdings</CardTitle>
             <CardDescription>
@@ -209,8 +209,8 @@ export default function Portfolio() {
         </Card>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-6">
-        <Card className="flex-1">
+      <div className="flex flex-col gap-6 md:flex-row md:gap-6">
+        <Card className="flex-1 min-w-0">
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>Portfolio Allocation</CardTitle>
@@ -256,7 +256,7 @@ export default function Portfolio() {
           </CardContent>
         </Card>
 
-        <Card className="flex-1">
+        <Card className="flex-1 min-w-0">
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>Your Holdings</CardTitle>
