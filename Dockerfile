@@ -3,10 +3,9 @@ FROM node:18-alpine as frontend-builder
 
 WORKDIR /app
 
-# Copy frontend files
-COPY . .
+COPY frontend/package.json frontend/package-lock.json ./
+COPY frontend/ ./
 
-# Install dependencies and build
 RUN npm install
 RUN npm run build
 
@@ -24,7 +23,7 @@ RUN apt-get update && apt-get install -y \
 COPY . .
 
 # Copy built frontend files
-COPY --from=frontend-builder /app/dist /app/static
+COPY --from=frontend-builder /app/build /app/static
 
 # Create and activate virtual environment
 RUN python -m venv venv
