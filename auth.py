@@ -24,8 +24,8 @@ def init_google_oauth(app):
         client_secret=app.config.get('GOOGLE_CLIENT_SECRET'),
         scope=["profile", "email"],
         redirect_to="auth.callback",
-        authorized_url="/login/google/authorized",  # Updated to match frontend route
-        redirect_url="/login/google/authorized"  # Updated to match frontend route
+        authorized_url="/google/authorized",  # Changed to match the actual callback URL
+        redirect_url="/google/authorized"  # Changed to match the actual callback URL
     )
     app.register_blueprint(google_bp, url_prefix="/login")
     logger.debug("Google OAuth blueprint registered")
