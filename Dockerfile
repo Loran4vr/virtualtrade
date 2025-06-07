@@ -27,6 +27,9 @@ COPY . .
 # Copy built frontend files
 COPY --from=frontend-builder /app/build /app/static
 
+# Debug: List static output in final image
+RUN ls -l /app/static && ls -l /app/static/js
+
 # Create and activate virtual environment
 RUN python -m venv venv
 ENV PATH="/app/venv/bin:$PATH"
