@@ -11,40 +11,70 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is authenticated on component mount
+    let mounted = true;
+    console.log('AuthProvider: Starting authentication check');
+
     async function fetchUser() {
       try {
+        console.log('AuthProvider: Fetching user data');
         const response = await fetch('/auth/user');
+        console.log('AuthProvider: Response status:', response.status);
         const data = await response.json();
+        console.log('AuthProvider: User data:', data);
         
-        if (data.authenticated) {
-          setUser(data.user);
-        } else {
-          setUser(null);
+        if (mounted) {
+          if (data.authenticated) {
+            setUser(data.user);
+          } else {
+            setUser(null);
+          }
         }
       } catch (error) {
-        console.error('Failed to fetch user:', error);
-        setUser(null);
+        console.error('AuthProvider: Failed to fetch user:', error);
+        if (mounted) {
+          setUser(null);
+        }
       } finally {
-        setLoading(false);
+        if (mounted) {
+          console.log('AuthProvider: Setting loading to false');
+          setLoading(false);
+        }
       }
     }
 
     fetchUser();
+
+    // Cleanup function
+    return () => {
+      console.log('AuthProvider: Cleanup - unmounting');
+      mounted = false;
+    };
   }, []);
 
   const login = () => {
-    // Redirect to Google login
-    window.location.href = '/auth/login';
+    console.log('AuthProvider: Initiating login');
+    // Use a more reliable way to handle navigation
+    const loginUrl = '/auth/login';
+    if (window.location.pathname !== loginUrl) {
+      window.location.href = loginUrl;
+    }
   };
 
   const logout = async () => {
+    console.log('AuthProvider: Initiating logout');
     try {
-      await fetch('/auth/logout');
+      await fetch('/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
       setUser(null);
-      window.location.href = '/login';
+      // Use a more reliable way to handle navigation
+      const loginUrl = '/login';
+      if (window.location.pathname !== loginUrl) {
+        window.location.href = loginUrl;
+      }
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error('AuthProvider: Logout failed:', error);
     }
   };
 
