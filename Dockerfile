@@ -10,7 +10,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # Python backend
-FROM python:3.11-slim
+FROM python:3.9-slim
 
 WORKDIR /app
 
@@ -19,25 +19,29 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy backend files
-COPY . .
-
-# Copy built frontend files
-COPY --from=frontend-builder /app/frontend/build /app/static
-
-# Create and activate virtual environment
-RUN python -m venv venv
-ENV PATH="/app/venv/bin:$PATH"
-
-# Install Python dependencies
+# Copy requirements first to leverage Docker cache
+COPY requirements.prod.txt .
 RUN pip install --no-cache-dir -r requirements.prod.txt
 
+# Copy the rest of the application
+COPY . .
+
+# Create static directory if it doesn't exist
+RUN mkdir -p /app/static
+
+# Copy built frontend files
+COPY --from=frontend-builder /app/frontend/build/ /app/static/
+
+# Verify static files exist
+RUN ls -la /app/static
+
 # Set environment variables
+ENV FLASK_APP=main.py
 ENV FLASK_ENV=production
-ENV PORT=8000
+ENV PORT=5000
 
-# Expose port
-EXPOSE 8000
+# Expose the port
+EXPOSE 5000
 
-# Run the application
-CMD ["gunicorn", "-c", "gunicorn_config.py", "main:create_app()"] 
+# Run the application with Gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "main:create_app()"] 

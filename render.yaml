@@ -8,6 +8,10 @@ services:
     envVars:
       - key: FLASK_ENV
         value: production
+      - key: FLASK_APP
+        value: main.py
+      - key: PORT
+        value: 5000
       - key: SECRET_KEY
         sync: false
       - key: GOOGLE_CLIENT_ID
@@ -15,4 +19,6 @@ services:
       - key: GOOGLE_CLIENT_SECRET
         sync: false
       - key: ALPHA_VANTAGE_API_KEY
-        sync: false 
+        sync: false
+    autoDeploy: true
+    branch: main 

@@ -10,7 +10,7 @@ from config import config
 load_dotenv()
 
 def create_app(config_name='default'):
-    app = Flask(__name__, static_folder='.', static_url_path='')
+    app = Flask(__name__, static_folder='static', static_url_path='')
     
     # Load configuration
     app.config.from_object(config[config_name])
@@ -27,7 +27,7 @@ def create_app(config_name='default'):
     @app.route('/', defaults={'path': ''})
     @app.route('/<path:path>')
     def index(path):
-        if (path.startswith('static/') or path.startswith('api/') or path.startswith('auth/')):
+        if path.startswith('api/') or path.startswith('auth/'):
             return 'Not Found', 404
         return send_from_directory(app.static_folder, 'index.html')
     

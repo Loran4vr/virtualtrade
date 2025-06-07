@@ -4,16 +4,21 @@ services:
   web:
     build: .
     ports:
-      - "8000:8000"
+      - "5000:5000"
     environment:
+      - FLASK_APP=main.py
       - FLASK_ENV=production
+      - PORT=5000
       - SECRET_KEY=${SECRET_KEY}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - ALPHA_VANTAGE_API_KEY=${ALPHA_VANTAGE_API_KEY}
+    volumes:
+      - .:/app
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
       interval: 30s
       timeout: 10s
-      retries: 3 
+      retries: 3
+      start_period: 40s 
