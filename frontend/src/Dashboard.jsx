@@ -113,8 +113,8 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:justify-between md:gap-4">
-        <Card className="flex-1 min-w-0">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
+        <Card className="min-w-0">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Portfolio Value</CardTitle>
             <CardDescription>
@@ -130,7 +130,7 @@ export default function Dashboard() {
             </p>
           </CardContent>
         </Card>
-        <Card className="flex-1 min-w-0">
+        <Card className="min-w-0">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Market Status</CardTitle>
             <CardDescription>
@@ -151,7 +151,7 @@ export default function Dashboard() {
             </p>
           </CardContent>
         </Card>
-        <Card className="flex-1 min-w-0">
+        <Card className="min-w-0">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Holdings</CardTitle>
             <CardDescription>
