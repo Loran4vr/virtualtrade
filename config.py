@@ -9,18 +9,24 @@ class Config:
     GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
     GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
     ALPHA_VANTAGE_API_KEY = os.environ.get('ALPHA_VANTAGE_API_KEY', '')
+    
+    # Session configuration
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    PERMANENT_SESSION_LIFETIME = 3600  # 1 hour
 
 class DevelopmentConfig(Config):
     DEBUG = True
+    SESSION_COOKIE_SECURE = False  # Allow non-HTTPS in development
 
 class ProductionConfig(Config):
     DEBUG = False
-    # Add production-specific settings here
-    # For example:
-    # SESSION_COOKIE_SECURE = True
-    # REMEMBER_COOKIE_SECURE = True
-    # SESSION_COOKIE_HTTPONLY = True
-    # REMEMBER_COOKIE_HTTPONLY = True
+    # Production-specific settings
+    SESSION_COOKIE_SECURE = True
+    REMEMBER_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_HTTPONLY = True
 
 # Configuration dictionary
 config = {
