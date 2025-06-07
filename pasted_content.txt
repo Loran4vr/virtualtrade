@@ -1,0 +1,112 @@
+index-8XggsIle.css:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 ()
+/assets/index-DTqIQ5Yq.js:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 ()
+script.file-downloads.hash.outbound-links.pageview-props.revenue.tagged-events.js:1 
+            
+            
+           Failed to load resource: net::ERR_BLOCKED_BY_ADBLOCKER
+sr-client-cfg.amplitude.com/config?api_key=46ac3f9abb41dd2d17a5785e052bc6d3&config_keys=analyticsSDK&session_id=1749217484376:1 
+            
+            
+           Failed to load resource: net::ERR_BLOCKED_BY_ADBLOCKER
+VM23:1256 Amplitude Logger [Error]: Failed to fetch remote configuration because of error:  Error: Failed to fetch
+t.error @ VM23:1256
+VM23:1258 
+            
+            
+           Failed to load resource: net::ERR_BLOCKED_BY_ADBLOCKER
+(anonymous) @ VM23:1258
+VM23:1256 Amplitude Logger [Warn]: {code: 0, error: "Status 'failed' provided for 3 events"}
+t.warn @ VM23:1256
+VM23:1258 
+            
+            
+           Failed to load resource: net::ERR_BLOCKED_BY_ADBLOCKER
+(anonymous) @ VM23:1258
+VM23:1256 Amplitude Logger [Warn]: {code: 0, error: "Status 'failed' provided for 3 events"}
+t.warn @ VM23:1256
+VM23:1258 
+            
+            
+           Failed to load resource: net::ERR_BLOCKED_BY_ADBLOCKER
+(anonymous) @ VM23:1258
+VM23:1256 Amplitude Logger [Warn]: {code: 0, error: "Status 'failed' provided for 3 events"}
+t.warn @ VM23:1256
+VM23:1258 
+            
+            
+           Failed to load resource: net::ERR_BLOCKED_BY_ADBLOCKER
+(anonymous) @ VM23:1258
+VM23:1256 Amplitude Logger [Warn]: {code: 0, error: "Status 'failed' provided for 3 events"}
+t.warn @ VM23:1256
+index-8XggsIle.css:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 ()
+VM23:1258 
+            
+            
+           POST https://api2.amplitude.com/2/httpapi net::ERR_BLOCKED_BY_ADBLOCKER
+(anonymous) @ VM23:1258
+(anonymous) @ VM23:1258
+a @ VM23:1254
+(anonymous) @ VM23:1254
+(anonymous) @ VM23:1254
+W @ VM23:1254
+e.send @ VM23:1258
+(anonymous) @ VM23:1256
+a @ VM23:1254
+(anonymous) @ VM23:1254
+(anonymous) @ VM23:1254
+W @ VM23:1254
+t.send @ VM23:1256
+(anonymous) @ VM23:1256
+a @ VM23:1254
+(anonymous) @ VM23:1254
+c @ VM23:1254
+Promise.then
+d @ VM23:1254
+(anonymous) @ VM23:1254
+W @ VM23:1254
+(anonymous) @ VM23:1256
+(anonymous) @ VM23:1256
+a @ VM23:1254
+(anonymous) @ VM23:1254
+(anonymous) @ VM23:1254
+W @ VM23:1254
+t.flush @ VM23:1256
+(anonymous) @ VM23:1256
+VM23:1256 Amplitude Logger [Warn]: {code: 0, error: "Status 'failed' provided for 3 events"}
+t.warn @ VM23:1256
+t.handleResponse @ VM23:1256
+(anonymous) @ VM23:1256
+a @ VM23:1254
+(anonymous) @ VM23:1254
+c @ VM23:1254
+Promise.then
+d @ VM23:1254
+(anonymous) @ VM23:1254
+W @ VM23:1254
+t.send @ VM23:1256
+(anonymous) @ VM23:1256
+a @ VM23:1254
+(anonymous) @ VM23:1254
+c @ VM23:1254
+Promise.then
+d @ VM23:1254
+(anonymous) @ VM23:1254
+W @ VM23:1254
+(anonymous) @ VM23:1256
+(anonymous) @ VM23:1256
+a @ VM23:1254
+(anonymous) @ VM23:1254
+(anonymous) @ VM23:1254
+W @ VM23:1254
+t.flush @ VM23:1256
+(anonymous) @ VM23:1256
+2VM23:1256 Amplitude Logger [Error]: Event rejected due to exceeded retry count

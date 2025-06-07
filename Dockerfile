@@ -1,0 +1,44 @@
+# Use Node.js for building frontend
+FROM node:18-alpine as frontend-builder
+
+WORKDIR /app/frontend
+
+# Copy frontend files
+COPY . .
+
+# Install dependencies and build
+RUN npm install
+RUN npm run build
+
+# Python backend
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy backend files
+COPY . .
+
+# Copy built frontend files
+COPY --from=frontend-builder /app/frontend/dist /app/static
+
+# Create and activate virtual environment
+RUN python -m venv venv
+ENV PATH="/app/venv/bin:$PATH"
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.prod.txt
+
+# Set environment variables
+ENV FLASK_ENV=production
+ENV PORT=8000
+
+# Expose port
+EXPOSE 8000
+
+# Run the application
+CMD ["gunicorn", "-c", "gunicorn_config.py", "main:create_app()"] 
