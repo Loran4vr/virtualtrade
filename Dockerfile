@@ -8,8 +8,6 @@ COPY frontend/ ./
 
 RUN npm install
 RUN npm run build
-# Debug: List build output
-RUN ls -l /app/build && ls -l /app/build/static/js
 
 # Python backend
 FROM python:3.11-slim
@@ -24,11 +22,8 @@ RUN apt-get update && apt-get install -y \
 # Copy backend files
 COPY . .
 
-# Copy built frontend files
-COPY --from=frontend-builder /app/build /app/static
-
-# Debug: List static output in final image
-RUN ls -l /app/static && ls -l /app/static/js
+# Copy built frontend files (fix: copy build output directly to /app)
+COPY --from=frontend-builder /app/build /app
 
 # Create and activate virtual environment
 RUN python -m venv venv
