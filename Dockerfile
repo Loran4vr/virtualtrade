@@ -8,6 +8,8 @@ COPY frontend/ ./
 
 RUN npm install
 RUN npm run build
+# Debug: List build output
+RUN ls -l /app/build && ls -l /app/build/static/js
 
 # Python backend
 FROM python:3.11-slim
