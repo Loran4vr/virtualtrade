@@ -10,7 +10,7 @@ from config import config
 load_dotenv()
 
 def create_app(config_name='default'):
-    app = Flask(__name__, static_folder='static')
+    app = Flask(__name__, static_folder='static', static_url_path='/static')
     
     # Load configuration
     app.config.from_object(config[config_name])
@@ -24,8 +24,14 @@ def create_app(config_name='default'):
     app.register_blueprint(portfolio_bp, url_prefix='/api/portfolio')
     
     # Serve static files (frontend)
-    @app.route('/')
-    def index():
+    @app.route('/static/<path:filename>')
+    def static_files(filename):
+        return send_from_directory(app.static_folder, filename)
+
+    # Catch-all route for React Router
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def index(path):
         return send_from_directory(app.static_folder, 'index.html')
     
     # API routes
@@ -36,7 +42,7 @@ def create_app(config_name='default'):
     # Error handlers
     @app.errorhandler(404)
     def not_found(e):
-        return jsonify({'error': 'Not found'}), 404
+        return send_from_directory(app.static_folder, 'index.html')
     
     @app.errorhandler(500)
     def server_error(e):
