@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
-import { Input } from '../components/ui/input';
-import { Button } from '../components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { useToast } from '../components/ui/use-toast';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
-import { Label } from '../components/ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';
+import { Input } from './input';
+import { Button } from './button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
+import { useToast } from './use-toast';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './dialog';
+import { Label } from './label';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Search, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 

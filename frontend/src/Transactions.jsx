@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { useToast } from '../components/ui/use-toast';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
-import { Calendar } from '../components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card';
+import { Button } from './button';
+import { useToast } from './use-toast';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './dialog';
+import { Calendar } from './calendar';
+import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon, ArrowUpRight, ArrowDownRight, Filter } from 'lucide-react';
 

@@ -1,21 +1,21 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider } from '../components/ui/theme-provider';
-import '../App.css';
+import { ThemeProvider } from './theme-provider';
+import './App.css';
 
 // Pages
-import Login from '../pages/Login';
-import Dashboard from '../pages/Dashboard';
-import Market from '../pages/Market';
-import Portfolio from '../pages/Portfolio';
-import Transactions from '../pages/Transactions';
+import Login from './Login';
+import Dashboard from './Dashboard';
+import Market from './Market';
+import Portfolio from './Portfolio';
+import Transactions from './Transactions';
 
 // Components
-import Layout from '../components/Layout';
-import { Toaster } from '../components/ui/toaster';
+import Layout from './Layout';
+import { Toaster } from './toaster';
 
 // Context
-import { AuthProvider } from '../context/AuthContext';
+import { AuthProvider } from './AuthContext';
 
 function App() {
   return (

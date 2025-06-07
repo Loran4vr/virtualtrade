@@ -1,5 +1,5 @@
 import * as React from "react";
-import { cn } from "../../lib/utils";
+import { cn } from "./utils";
 
 const Dialog = ({ children, open, onOpenChange, ...props }) => {
   const [isOpen, setIsOpen] = React.useState(open || false);

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from './AuthContext';
 
 // Icons
 import { 
@@ -16,9 +16,9 @@ import {
 } from 'lucide-react';
 
 // UI Components
-import { Button } from './ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { useTheme } from './ui/theme-provider';
+import { Button } from './button';
+import { Avatar, AvatarFallback, AvatarImage } from './avatar';
+import { useTheme } from './theme-provider';
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();

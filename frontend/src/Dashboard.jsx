@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { useToast } from '../components/ui/use-toast';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
+import { useToast } from './use-toast';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ArrowUpIcon, ArrowDownIcon } from 'lucide-react';
 
