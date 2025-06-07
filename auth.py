@@ -25,9 +25,7 @@ def init_google_oauth(app):
         scope=["profile", "email"],
         redirect_to="auth.callback",
         authorized_url="/google/authorized",  # This ensures consistent redirect URI
-        redirect_url="/google/authorized",  # Explicitly set the redirect URL
-        reprompt="consent",  # Force consent screen to ensure proper authorization
-        reprompt_select_account=True  # Force account selection
+        redirect_url="/google/authorized"  # Explicitly set the redirect URL
     )
     app.register_blueprint(google_bp, url_prefix="/login")
     logger.debug("Google OAuth blueprint registered")
