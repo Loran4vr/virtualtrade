@@ -70,8 +70,8 @@ def callback():
     }
     logger.debug("User info stored in session")
     
-    # Redirect to the frontend dashboard
-    return redirect(url_for('static', filename='index.html'))
+    # Redirect to the frontend root for React Router
+    return redirect('/')
 
 @auth_bp.route('/logout')
 def logout():
