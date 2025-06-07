@@ -1,4 +1,4 @@
-from flask import Blueprint, redirect, url_for, session, jsonify, current_app
+from flask import Blueprint, redirect, url_for, session, jsonify, current_app, request
 from flask_dance.contrib.google import make_google_blueprint, google
 import os
 import json
@@ -25,7 +25,9 @@ def init_google_oauth(app):
         scope=["profile", "email"],
         redirect_to="auth.callback",
         authorized_url="/google/authorized",  # This ensures consistent redirect URI
-        redirect_url="/google/authorized"  # Explicitly set the redirect URL
+        redirect_url="/google/authorized",  # Explicitly set the redirect URL
+        reprompt="consent",  # Force consent screen to ensure proper authorization
+        reprompt_select_account=True  # Force account selection
     )
     app.register_blueprint(google_bp, url_prefix="/login")
     logger.debug("Google OAuth blueprint registered")
@@ -44,6 +46,9 @@ def login():
 def callback():
     """Handle the OAuth callback"""
     logger.debug("Callback route accessed")
+    logger.debug(f"Request URL: {request.url}")
+    logger.debug(f"Request args: {request.args}")
+    
     if not google.authorized:
         logger.debug("User not authorized in callback, redirecting to Google login")
         return redirect(url_for("google.login"))

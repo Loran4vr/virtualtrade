@@ -1,4 +1,4 @@
-from flask import Flask, render_template, send_from_directory, jsonify
+from flask import Flask, render_template, send_from_directory, jsonify, session
 import os
 from dotenv import load_dotenv
 from auth import auth_bp, init_google_oauth
