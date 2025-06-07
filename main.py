@@ -28,10 +28,12 @@ def create_app(config_name='default'):
     def static_files(filename):
         return send_from_directory(app.static_folder, filename)
 
-    # Catch-all route for React Router
+    # Catch-all route for React Router (only for non-static, non-api, non-auth)
     @app.route('/', defaults={'path': ''})
     @app.route('/<path:path>')
     def index(path):
+        if (path.startswith('static/') or path.startswith('api/') or path.startswith('auth/')):
+            return 'Not Found', 404
         return send_from_directory(app.static_folder, 'index.html')
     
     # API routes
