@@ -1,16 +1,32 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';
-import { Input } from './input';
-import { Button } from './button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
-import { useToast } from './use-toast';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './dialog';
-import { Label } from './label';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import CardHeader from '@mui/material/CardHeader';
+import Typography from '@mui/material/Typography';
+import Grid from '@mui/material/Grid';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Search, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import StarIcon from '@mui/icons-material/Star';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
+import IconButton from '@mui/material/IconButton';
 
 export default function Market() {
-  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [selectedStock, setSelectedStock] = useState(null);
@@ -20,56 +36,46 @@ export default function Market() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [tradeType, setTradeType] = useState('buy');
   const [portfolio, setPortfolio] = useState(null);
+  const [tradeDialogOpen, setTradeDialogOpen] = useState(false);
+  const [watchlist, setWatchlist] = useState(() => {
+    const saved = localStorage.getItem('watchlist');
+    return saved ? JSON.parse(saved) : [];
+  });
 
-  // Fetch portfolio data
   useEffect(() => {
     async function fetchPortfolio() {
       try {
         const balanceResponse = await fetch('/api/portfolio/balance');
         const holdingsResponse = await fetch('/api/portfolio/holdings');
-        
         if (balanceResponse.ok && holdingsResponse.ok) {
           const balanceData = await balanceResponse.json();
           const holdingsData = await holdingsResponse.json();
-          
           setPortfolio({
             cash_balance: balanceData.cash_balance,
             holdings: holdingsData.holdings,
           });
         }
       } catch (error) {
-        console.error('Failed to fetch portfolio:', error);
+        // Handle error
       }
     }
-
     fetchPortfolio();
   }, []);
 
   // Handle search
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
-    
     setSearchLoading(true);
     try {
       const response = await fetch(`/api/market/search?query=${encodeURIComponent(searchQuery)}`);
       const data = await response.json();
-      
       if (data.bestMatches) {
         setSearchResults(data.bestMatches);
       } else {
         setSearchResults([]);
-        toast({
-          title: 'No results found',
-          description: 'Try a different search term',
-        });
       }
     } catch (error) {
-      console.error('Search failed:', error);
-      toast({
-        title: 'Search failed',
-        description: 'Please try again later',
-        variant: 'destructive',
-      });
+      setSearchResults([]);
     } finally {
       setSearchLoading(false);
     }
@@ -79,19 +85,16 @@ export default function Market() {
   const handleSelectStock = async (stock) => {
     setSelectedStock(stock);
     setLoading(true);
-    
+    setTradeDialogOpen(true);
     try {
-      // Fetch daily data for the selected stock
       const symbol = stock['1. symbol'];
       const response = await fetch(`/api/market/daily?symbol=${encodeURIComponent(symbol)}`);
       const data = await response.json();
-      
       if (data['Time Series (Daily)']) {
-        // Convert the data to a format suitable for the chart
         const timeSeriesData = data['Time Series (Daily)'];
         const chartData = Object.keys(timeSeriesData)
-          .slice(0, 30) // Get last 30 days
-          .reverse() // Reverse to show oldest to newest
+          .slice(0, 30)
+          .reverse()
           .map(date => ({
             date,
             close: parseFloat(timeSeriesData[date]['4. close']),
@@ -100,7 +103,6 @@ export default function Market() {
             low: parseFloat(timeSeriesData[date]['3. low']),
             volume: parseFloat(timeSeriesData[date]['5. volume']),
           }));
-        
         setStockData({
           meta: data['Meta Data'],
           chartData,
@@ -109,19 +111,10 @@ export default function Market() {
           changePercent: ((chartData[chartData.length - 1].close - chartData[chartData.length - 2].close) / chartData[chartData.length - 2].close) * 100,
         });
       } else {
-        toast({
-          title: 'Data not available',
-          description: 'Could not fetch data for this stock',
-          variant: 'destructive',
-        });
+        setStockData(null);
       }
     } catch (error) {
-      console.error('Failed to fetch stock data:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch stock data',
-        variant: 'destructive',
-      });
+      setStockData(null);
     } finally {
       setLoading(false);
     }
@@ -130,257 +123,215 @@ export default function Market() {
   // Handle trade execution
   const executeTrade = async () => {
     if (!selectedStock || !stockData) return;
-    
     const symbol = selectedStock['1. symbol'];
     const price = stockData.latestPrice;
-    
     try {
       const endpoint = tradeType === 'buy' ? '/api/portfolio/buy' : '/api/portfolio/sell';
       const response = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          symbol,
-          quantity: parseInt(quantity),
-          price,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ symbol, quantity: parseInt(quantity), price }),
       });
-      
       const data = await response.json();
-      
       if (response.ok) {
-        toast({
-          title: 'Trade executed',
-          description: `Successfully ${tradeType === 'buy' ? 'bought' : 'sold'} ${quantity} shares of ${symbol}`,
-        });
-        
         // Update portfolio data
         const balanceResponse = await fetch('/api/portfolio/balance');
         const holdingsResponse = await fetch('/api/portfolio/holdings');
-        
         if (balanceResponse.ok && holdingsResponse.ok) {
           const balanceData = await balanceResponse.json();
           const holdingsData = await holdingsResponse.json();
-          
           setPortfolio({
             cash_balance: balanceData.cash_balance,
             holdings: holdingsData.holdings,
           });
         }
-      } else {
-        toast({
-          title: 'Trade failed',
-          description: data.error || 'An error occurred',
-          variant: 'destructive',
-        });
+        setTradeDialogOpen(false);
       }
-    } catch (error) {
-      console.error('Trade execution failed:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to execute trade',
-        variant: 'destructive',
-      });
-    }
+    } catch (error) {}
   };
 
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Market Search</CardTitle>
-          <CardDescription>
-            Search for stocks to trade
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex space-x-2">
-            <Input
-              placeholder="Search by company name or symbol..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            />
-            <Button onClick={handleSearch} disabled={searchLoading}>
-              {searchLoading ? 'Searching...' : <Search className="h-4 w-4" />}
-            </Button>
-          </div>
-          
-          {searchResults.length > 0 && (
-            <div className="mt-4 border rounded-md">
-              <div className="grid grid-cols-3 gap-2 p-2 font-medium text-sm bg-muted">
-                <div>Symbol</div>
-                <div>Name</div>
-                <div>Region</div>
-              </div>
-              {searchResults.map((result, index) => (
-                <div
-                  key={index}
-                  className="grid grid-cols-3 gap-2 p-2 border-t hover:bg-muted cursor-pointer"
-                  onClick={() => handleSelectStock(result)}
-                >
-                  <div className="font-medium">{result['1. symbol']}</div>
-                  <div className="truncate">{result['2. name']}</div>
-                  <div>{result['4. region']}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+  // Watchlist handlers
+  const addToWatchlist = (symbol) => {
+    if (!watchlist.includes(symbol)) {
+      const updated = [...watchlist, symbol];
+      setWatchlist(updated);
+      localStorage.setItem('watchlist', JSON.stringify(updated));
+    }
+  };
+  const removeFromWatchlist = (symbol) => {
+    const updated = watchlist.filter((s) => s !== symbol);
+    setWatchlist(updated);
+    localStorage.setItem('watchlist', JSON.stringify(updated));
+  };
+  const isInWatchlist = (symbol) => watchlist.includes(symbol);
 
-      {selectedStock && (
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle>{selectedStock['2. name']}</CardTitle>
-                <CardDescription>
-                  {selectedStock['1. symbol']} • {selectedStock['4. region']}
-                </CardDescription>
-              </div>
-              {stockData && (
-                <div className="text-right">
-                  <div className="text-2xl font-bold">
-                    ₹{stockData.latestPrice.toFixed(2)}
-                  </div>
-                  <div className={`flex items-center justify-end ${
-                    stockData.change >= 0 ? 'text-green-500' : 'text-red-500'
-                  }`}>
-                    {stockData.change >= 0 ? (
-                      <ArrowUpRight className="h-4 w-4 mr-1" />
-                    ) : (
-                      <ArrowDownRight className="h-4 w-4 mr-1" />
-                    )}
-                    <span>
-                      {stockData.change.toFixed(2)} ({stockData.changePercent.toFixed(2)}%)
-                    </span>
-                  </div>
-                </div>
+  return (
+    <Box sx={{ p: { xs: 1, md: 3 } }}>
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={8}>
+          <Card>
+            <CardHeader title="Market Search" subheader="Search for stocks to trade" />
+            <CardContent>
+              <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                <TextField
+                  label="Search Stocks"
+                  variant="outlined"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  fullWidth
+                  onKeyDown={e => { if (e.key === 'Enter') handleSearch(); }}
+                />
+                <Button variant="contained" onClick={handleSearch} disabled={searchLoading}>
+                  {searchLoading ? <CircularProgress size={24} /> : 'Search'}
+                </Button>
+              </Box>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Symbol</TableCell>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Type</TableCell>
+                      <TableCell>Region</TableCell>
+                      <TableCell align="right">Action</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {searchResults.map((stock) => (
+                      <TableRow key={stock['1. symbol']} hover>
+                        <TableCell>{stock['1. symbol']}</TableCell>
+                        <TableCell>{stock['2. name']}</TableCell>
+                        <TableCell>{stock['3. type']}</TableCell>
+                        <TableCell>{stock['4. region']}</TableCell>
+                        <TableCell align="right">
+                          <Button variant="outlined" size="small" onClick={() => handleSelectStock(stock)}>
+                            View
+                          </Button>
+                          <IconButton onClick={() => isInWatchlist(stock['1. symbol']) ? removeFromWatchlist(stock['1. symbol']) : addToWatchlist(stock['1. symbol'])}>
+                            {isInWatchlist(stock['1. symbol']) ? <StarIcon color="warning" /> : <StarBorderIcon />}
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardHeader title="Portfolio Snapshot" subheader="Your current balance and holdings" />
+            <CardContent>
+              <Typography variant="h6">Balance: ₹{portfolio?.cash_balance?.toLocaleString() || '0'}</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Holdings: {Object.keys(portfolio?.holdings || {}).length}
+              </Typography>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Symbol</TableCell>
+                    <TableCell align="right">Qty</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {Object.entries(portfolio?.holdings || {}).map(([symbol, qty]) => (
+                    <TableRow key={symbol}>
+                      <TableCell>{symbol}</TableCell>
+                      <TableCell align="right">{qty}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+          <Card sx={{ mt: 3 }}>
+            <CardHeader title="Watchlist" subheader="Your favorite stocks" />
+            <CardContent>
+              {watchlist.length === 0 ? (
+                <Typography color="text.secondary">No stocks in watchlist</Typography>
+              ) : (
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Symbol</TableCell>
+                      <TableCell align="right">Remove</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {watchlist.map((symbol) => (
+                      <TableRow key={symbol}>
+                        <TableCell>{symbol}</TableCell>
+                        <TableCell align="right">
+                          <Button size="small" onClick={() => removeFromWatchlist(symbol)}>
+                            Remove
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               )}
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex justify-center py-8">Loading...</div>
-            ) : stockData ? (
-              <div className="h-[300px]">
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Stock Details Dialog */}
+      <Dialog open={tradeDialogOpen} onClose={() => setTradeDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Stock Details</DialogTitle>
+        <DialogContent>
+          {loading || !stockData ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <Box>
+              <Typography variant="h6" gutterBottom>{selectedStock['2. name']} ({selectedStock['1. symbol']})</Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Latest Price: ₹{stockData.latestPrice} &nbsp;
+                {stockData.change >= 0 ? (
+                  <Chip icon={<TrendingUpIcon />} label={`+${stockData.change.toFixed(2)} (${stockData.changePercent.toFixed(2)}%)`} color="success" size="small" />
+                ) : (
+                  <Chip icon={<TrendingDownIcon />} label={`${stockData.change.toFixed(2)} (${stockData.changePercent.toFixed(2)}%)`} color="error" size="small" />
+                )}
+              </Typography>
+              <Box sx={{ height: 200, my: 2 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={stockData.chartData}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis domain={['auto', 'auto']} />
-                    <Tooltip formatter={(value) => [`₹${value}`, 'Price']} />
-                    <Line 
-                      type="monotone" 
-                      dataKey="close" 
-                      stroke="#8884d8" 
-                      strokeWidth={2} 
-                      dot={false} 
-                    />
+                    <XAxis dataKey="date" hide />
+                    <YAxis />
+                    <Tooltip formatter={(value) => [`₹${value.toLocaleString()}`, 'Close']} />
+                    <Line type="monotone" dataKey="close" stroke="#1976d2" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
-              </div>
-            ) : (
-              <div className="flex justify-center py-8">Select a stock to view data</div>
-            )}
-          </CardContent>
-          <CardFooter className="flex justify-between">
-            <div className="text-sm text-muted-foreground">
-              {stockData && `Last updated: ${stockData.meta?.['3. Last Refreshed']}`}
-            </div>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button>Trade</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Execute Trade</DialogTitle>
-                  <DialogDescription>
-                    {selectedStock['2. name']} ({selectedStock['1. symbol']})
-                  </DialogDescription>
-                </DialogHeader>
-                
-                <Tabs defaultValue="buy" onValueChange={setTradeType}>
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="buy">Buy</TabsTrigger>
-                    <TabsTrigger value="sell">Sell</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="buy" className="space-y-4 pt-4">
-                    <div>
-                      <Label htmlFor="quantity">Quantity</Label>
-                      <Input
-                        id="quantity"
-                        type="number"
-                        min="1"
-                        value={quantity}
-                        onChange={(e) => setQuantity(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label>Price</Label>
-                      <div className="text-lg font-medium">
-                        ₹{stockData?.latestPrice.toFixed(2) || '0.00'}
-                      </div>
-                    </div>
-                    <div>
-                      <Label>Total Cost</Label>
-                      <div className="text-lg font-medium">
-                        ₹{((stockData?.latestPrice || 0) * quantity).toFixed(2)}
-                      </div>
-                    </div>
-                    <div>
-                      <Label>Available Balance</Label>
-                      <div className="text-lg font-medium">
-                        ₹{portfolio?.cash_balance?.toLocaleString() || '0'}
-                      </div>
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="sell" className="space-y-4 pt-4">
-                    <div>
-                      <Label htmlFor="quantity">Quantity</Label>
-                      <Input
-                        id="quantity"
-                        type="number"
-                        min="1"
-                        value={quantity}
-                        onChange={(e) => setQuantity(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label>Price</Label>
-                      <div className="text-lg font-medium">
-                        ₹{stockData?.latestPrice.toFixed(2) || '0.00'}
-                      </div>
-                    </div>
-                    <div>
-                      <Label>Total Value</Label>
-                      <div className="text-lg font-medium">
-                        ₹{((stockData?.latestPrice || 0) * quantity).toFixed(2)}
-                      </div>
-                    </div>
-                    <div>
-                      <Label>Current Holdings</Label>
-                      <div className="text-lg font-medium">
-                        {portfolio?.holdings?.[selectedStock['1. symbol']]?.quantity || 0} shares
-                      </div>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-                
-                <DialogFooter>
-                  <Button onClick={executeTrade}>
-                    {tradeType === 'buy' ? 'Buy' : 'Sell'} Shares
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </CardFooter>
-        </Card>
-      )}
-    </div>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: 2 }}>
+                <TextField
+                  label="Quantity"
+                  type="number"
+                  value={quantity}
+                  onChange={e => setQuantity(e.target.value)}
+                  size="small"
+                  sx={{ width: 120 }}
+                  inputProps={{ min: 1 }}
+                />
+                <Button variant={tradeType === 'buy' ? 'contained' : 'outlined'} color="primary" onClick={() => { setTradeType('buy'); executeTrade(); }}>
+                  Buy
+                </Button>
+                <Button variant={tradeType === 'sell' ? 'contained' : 'outlined'} color="secondary" onClick={() => { setTradeType('sell'); executeTrade(); }}>
+                  Sell
+                </Button>
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setTradeDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 }
 

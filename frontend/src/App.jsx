@@ -9,6 +9,7 @@ import Dashboard from './Dashboard';
 import Market from './Market';
 import Portfolio from './Portfolio';
 import Transactions from './Transactions';
+import Profile from './Profile';
 
 // Components
 import Layout from './Layout';
@@ -54,6 +55,7 @@ function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/login/google/authorized" element={<Navigate to="/" replace />} />
       <Route path="/google/authorized" element={<Navigate to="/" replace />} />
+      <Route path="/profile" element={<Profile />} />
       <Route path="/" element={
         <ProtectedRoute>
           <Layout>

@@ -1,14 +1,33 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card';
-import { Button } from './button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './dialog';
-import { useToast } from './use-toast';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import CardHeader from '@mui/material/CardHeader';
+import Typography from '@mui/material/Typography';
+import Grid from '@mui/material/Grid';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { useToast } from './use-toast';
 import { ArrowUpRight, ArrowDownRight, RefreshCw } from 'lucide-react';
 import { Calendar } from './calendar';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon, Filter } from 'lucide-react';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import InputLabel from '@mui/material/InputLabel';
+import FormControl from '@mui/material/FormControl';
 
 export default function Portfolio() {
   const { toast } = useToast();
@@ -18,6 +37,7 @@ export default function Portfolio() {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedHolding, setSelectedHolding] = useState(null);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [sortBy, setSortBy] = useState('symbol_asc');
 
   // Colors for the pie chart
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#8dd1e1'];
@@ -152,92 +172,158 @@ export default function Portfolio() {
     return data;
   };
 
+  // Sorting logic for holdings
+  const sortedHoldings = Object.entries(holdings).sort((a, b) => {
+    const [symbolA, holdingA] = a;
+    const [symbolB, holdingB] = b;
+    switch (sortBy) {
+      case 'symbol_asc':
+        return symbolA.localeCompare(symbolB);
+      case 'symbol_desc':
+        return symbolB.localeCompare(symbolA);
+      case 'qty_asc':
+        return holdingA.quantity - holdingB.quantity;
+      case 'qty_desc':
+        return holdingB.quantity - holdingA.quantity;
+      case 'avg_asc':
+        return holdingA.avg_price - holdingB.avg_price;
+      case 'avg_desc':
+        return holdingB.avg_price - holdingA.avg_price;
+      case 'val_asc':
+        return (holdingA.quantity * holdingA.avg_price) - (holdingB.quantity * holdingB.avg_price);
+      case 'val_desc':
+        return (holdingB.quantity * holdingB.avg_price) - (holdingA.quantity * holdingA.avg_price);
+      default:
+        return 0;
+    }
+  });
+
   if (loading) {
-    return <div className="flex items-center justify-center h-full">Loading...</div>;
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
+        <CircularProgress />
+      </Box>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
-        <Card className="min-w-0">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Portfolio Value</CardTitle>
-            <CardDescription>
-              Cash + Holdings
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ₹{calculateTotalValue().toLocaleString()}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Virtual balance for paper trading
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="min-w-0">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Cash Balance</CardTitle>
-            <CardDescription>
-              Available for trading
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ₹{portfolio?.cash_balance?.toLocaleString() || '0'}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Funds not invested in stocks
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="min-w-0">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Holdings</CardTitle>
-            <CardDescription>
-              Number of stocks
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {Object.keys(holdings).length}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Different stocks currently held
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+    <Box sx={{ p: { xs: 1, md: 3 } }}>
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardHeader title="Total Portfolio Value" subheader="Cash + Holdings" />
+            <CardContent>
+              <Typography variant="h4" fontWeight={700} gutterBottom>
+                ₹{calculateTotalValue().toLocaleString()}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Virtual balance for paper trading
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardHeader title="Cash Balance" subheader="Available for trading" />
+            <CardContent>
+              <Typography variant="h4" fontWeight={700} gutterBottom>
+                ₹{portfolio?.cash_balance?.toLocaleString() || '0'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Funds not invested in stocks
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardHeader title="Holdings" subheader="Number of stocks" />
+            <CardContent>
+              <Typography variant="h4" fontWeight={700} gutterBottom>
+                {Object.keys(holdings).length}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Different stocks currently held
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
-      <div className="flex flex-col gap-6 md:flex-row md:gap-6">
-        <Card className="flex-1 min-w-0">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>Portfolio Allocation</CardTitle>
-              <Button variant="outline" size="sm" onClick={refreshHoldingPrices} disabled={refreshing}>
-                <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-                Refresh
-              </Button>
-            </div>
-            <CardDescription>
-              Distribution of your investments
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              {Object.keys(holdings).length > 0 || portfolio?.cash_balance > 0 ? (
+      <Grid container spacing={3} sx={{ mt: 1 }}>
+        <Grid item xs={12} md={8}>
+          <Card>
+            <CardHeader
+              title="Holdings Breakdown"
+              subheader="Your current stock holdings"
+              action={
+                <FormControl size="small" sx={{ minWidth: 160 }}>
+                  <InputLabel>Sort By</InputLabel>
+                  <Select
+                    value={sortBy}
+                    label="Sort By"
+                    onChange={e => setSortBy(e.target.value)}
+                  >
+                    <MenuItem value="symbol_asc">Symbol (A-Z)</MenuItem>
+                    <MenuItem value="symbol_desc">Symbol (Z-A)</MenuItem>
+                    <MenuItem value="qty_asc">Quantity (Low-High)</MenuItem>
+                    <MenuItem value="qty_desc">Quantity (High-Low)</MenuItem>
+                    <MenuItem value="avg_asc">Avg Price (Low-High)</MenuItem>
+                    <MenuItem value="avg_desc">Avg Price (High-Low)</MenuItem>
+                    <MenuItem value="val_asc">Value (Low-High)</MenuItem>
+                    <MenuItem value="val_desc">Value (High-Low)</MenuItem>
+                  </Select>
+                </FormControl>
+              }
+            />
+            <CardContent>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Symbol</TableCell>
+                      <TableCell align="right">Quantity</TableCell>
+                      <TableCell align="right">Avg. Price</TableCell>
+                      <TableCell align="right">Total Value</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {sortedHoldings.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} align="center">No holdings</TableCell>
+                      </TableRow>
+                    ) : (
+                      sortedHoldings.map(([symbol, holding], idx) => (
+                        <TableRow key={symbol}>
+                          <TableCell>{symbol}</TableCell>
+                          <TableCell align="right">{holding.quantity}</TableCell>
+                          <TableCell align="right">₹{holding.avg_price.toLocaleString()}</TableCell>
+                          <TableCell align="right">₹{(holding.quantity * holding.avg_price).toLocaleString()}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardHeader title="Portfolio Allocation" subheader="Cash vs Stocks" />
+            <CardContent>
+              <Box sx={{ height: 250 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={preparePieChartData()}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={100}
-                      fill="#8884d8"
                       dataKey="value"
                       nameKey="name"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      fill="#8884d8"
+                      label
                     >
                       {preparePieChartData().map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -247,121 +333,32 @@ export default function Portfolio() {
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
-              ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground">
-                  No holdings to display
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
-        <Card className="flex-1 min-w-0">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>Your Holdings</CardTitle>
-              <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    Reset Portfolio
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Reset Portfolio</DialogTitle>
-                    <DialogDescription>
-                      This will reset your portfolio to the initial state with ₹10,00,000 cash balance and no holdings.
-                      This action cannot be undone.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setResetDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button variant="destructive" onClick={resetPortfolio}>
-                      Reset Portfolio
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
-            <CardDescription>
-              Stocks currently in your portfolio
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {Object.keys(holdings).length > 0 ? (
-              <div className="space-y-4">
-                <div className="grid grid-cols-4 gap-2 text-sm font-medium text-muted-foreground">
-                  <div>Symbol</div>
-                  <div>Quantity</div>
-                  <div>Avg. Price</div>
-                  <div>Value</div>
-                </div>
-                {Object.entries(holdings).map(([symbol, holding]) => {
-                  const value = holding.quantity * holding.avg_price;
-                  
-                  return (
-                    <div 
-                      key={symbol} 
-                      className="grid grid-cols-4 gap-2 py-2 border-t cursor-pointer hover:bg-muted"
-                      onClick={() => setSelectedHolding({ symbol, ...holding })}
-                    >
-                      <div className="font-medium">{symbol}</div>
-                      <div>{holding.quantity}</div>
-                      <div>₹{holding.avg_price.toFixed(2)}</div>
-                      <div>₹{value.toLocaleString()}</div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="flex items-center justify-center h-[200px] text-muted-foreground">
-                No holdings to display
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
+        <Button variant="contained" color="primary" onClick={fetchPortfolioData}>
+          Refresh
+        </Button>
+        <Button variant="outlined" color="error" onClick={() => setResetDialogOpen(true)}>
+          Reset Portfolio
+        </Button>
+      </Box>
 
-      {selectedHolding && (
-        <Dialog open={!!selectedHolding} onOpenChange={(open) => !open && setSelectedHolding(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{selectedHolding.symbol}</DialogTitle>
-              <DialogDescription>
-                Holding details
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Quantity</p>
-                  <p className="text-lg">{selectedHolding.quantity}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Average Price</p>
-                  <p className="text-lg">₹{selectedHolding.avg_price.toFixed(2)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Value</p>
-                  <p className="text-lg">₹{(selectedHolding.quantity * selectedHolding.avg_price).toLocaleString()}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Last Updated</p>
-                  <p className="text-lg">{new Date(selectedHolding.last_updated).toLocaleDateString()}</p>
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setSelectedHolding(null)}>
-                Close
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-    </div>
+      <Dialog open={resetDialogOpen} onClose={() => setResetDialogOpen(false)}>
+        <DialogTitle>Reset Portfolio</DialogTitle>
+        <DialogContent>
+          <Typography>Are you sure you want to reset your portfolio? This action cannot be undone.</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setResetDialogOpen(false)}>Cancel</Button>
+          <Button color="error" onClick={resetPortfolio}>Reset</Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 }
 
