@@ -1,4 +1,4 @@
-from flask import Flask, render_template, send_from_directory, jsonify, session, redirect, url_for, request
+from flask import Flask, render_template, send_from_directory, jsonify, session, redirect, url_for, request, make_response
 import os
 from dotenv import load_dotenv
 from auth import auth_bp, init_google_oauth
@@ -133,7 +133,11 @@ def create_app(config_name='default'):
     @app.route('/')
     def index():
         logger.debug(f"Handling request for path: {request.path}")
-        return send_from_directory(app.static_folder, 'index.html')
+        response = make_response(send_from_directory(app.static_folder, 'index.html'))
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
     
     # API routes
     @app.route('/api/health')
