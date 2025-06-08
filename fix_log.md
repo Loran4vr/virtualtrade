@@ -93,6 +93,8 @@ Removed the parentheses `()` from `main:create_app()` in the `Dockerfile`'s `CMD
 - **Fix Attempts**:
   1. Added explicit state storage in session
   2. Using Flask-Dance's built-in session storage
+     - Corrected import from `flask_dance.consumer.storage.session import SessionStorage`
+     - Using `SessionStorage()` for OAuth state management
   3. Connecting OAuth handler to blueprint instance
 - **Status**: 🔄 TESTING - Latest changes deployed, awaiting verification
 
@@ -102,7 +104,7 @@ Removed the parentheses `()` from `main:create_app()` in the `Dockerfile`'s `CMD
 - Cookie settings are correct for cross-site requests
 - Debug logging is in place to track session state
 - Explicit state handling added to session
-- Using Flask-Dance's session storage
+- Using Flask-Dance's session storage with correct import
 
 ## Next Steps
 1. Monitor session persistence after OAuth login
@@ -126,4 +128,4 @@ Removed the parentheses `()` from `main:create_app()` in the `Dockerfile`'s `CMD
 - Secure cookies require HTTPS
 - Session lifetime is set to 7 days
 - OAuth state must be preserved in session
-- Flask-Dance session storage is explicitly configured 
+- Flask-Dance session storage is explicitly configured with correct import 

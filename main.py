@@ -11,11 +11,11 @@ from decimal import Decimal
 from functools import wraps
 from flask_dance.contrib.google import make_google_blueprint, google
 from flask_dance.consumer import oauth_authorized
+from flask_dance.consumer.storage.session import SessionStorage  # Correct import
 from sqlalchemy.orm.exc import NoResultFound # Added for oauth_authorized handler
 import logging
 from backend.subscription import init_stripe, SUBSCRIPTION_PLANS
 from whitenoise import WhiteNoise
-import flask_dance.consumer.storage
 
 print("##### DEBUG: main.py file has been loaded and executed! #####") # Added top-level print
 
@@ -98,7 +98,7 @@ def create_app():
         client_secret=app.config.get('GOOGLE_CLIENT_SECRET'),
         scope=["profile", "email"],
         redirect_to="index", # Redirect to the root endpoint 'index' after successful OAuth
-        storage=flask_dance.consumer.storage.SessionStorage() # Use session storage explicitly
+        storage=SessionStorage() # Use session storage explicitly with correct class
     )
     app.register_blueprint(google_bp, url_prefix='/auth') # Register google_bp with app directly, url_prefix corrected to '/auth'
     logger.debug("Google OAuth blueprint registered directly with app")
