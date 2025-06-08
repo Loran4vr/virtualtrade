@@ -48,12 +48,8 @@ SUBSCRIPTION_PLANS = {
 FREE_TIER_LIMIT = 1000000  # 10 lakhs
 
 def create_app(config_name='default'):
-    from whitenoise.middleware import WhiteNoise # Import WhiteNoise here
     app = Flask(__name__, static_folder='static', static_url_path='/static')
     
-    # Wrap app in WhiteNoise for static files
-    app.wsgi_app = WhiteNoise(app.wsgi_app, root=app.static_folder, prefix='/static/')
-
     # Load configuration
     app.config.from_object(config[config_name])
     
