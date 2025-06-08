@@ -44,6 +44,9 @@ def create_app(config_name='default'):
     # Load configuration
     app.config.from_object(config[config_name])
     
+    # Debug print actual cookie settings from app.config
+    print(f"DEBUG: Flask app.config cookie settings: Secure={app.config.get('SESSION_COOKIE_SECURE')}, HttpOnly={app.config.get('SESSION_COOKIE_HTTPONLY')}, SameSite={app.config.get('SESSION_COOKIE_SAMESITE')}") # Added print
+    
     # Ensure SQLALCHEMY_DATABASE_URI is set
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///site.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -437,7 +440,7 @@ def create_app(config_name='default'):
 if __name__ == '__main__':
     # Use production config if FLASK_ENV is set to production
     config_name = os.getenv('FLASK_ENV', 'development')
-    logger.debug(f"Loading Flask configuration: {config_name}") # Added debug log
+    print(f"DEBUG: main: Loading Flask configuration: {config_name}") # Replaced with print
     app = create_app(config_name)
     logger.info("Starting Flask development server...")
     app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
