@@ -169,10 +169,12 @@ def get_user():
 # Subscription endpoints
 @app.route('/api/subscription/plans')
 def get_subscription_plans():
+    print("GET /api/subscription/plans hit")
     return jsonify(SUBSCRIPTION_PLANS)
 
 @app.route('/api/subscription/status')
 def get_subscription_status():
+    print("GET /api/subscription/status hit")
     if not session.get('user_id'):
         return jsonify({'error': 'Not authenticated'}), 401
     
@@ -187,6 +189,7 @@ def get_subscription_status():
 
 @app.route('/api/subscription/purchase', methods=['POST'])
 def purchase_subscription():
+    print("POST /api/subscription/purchase hit")
     if not session.get('user_id'):
         return jsonify({'error': 'Not authenticated'}), 401
     
