@@ -23,9 +23,7 @@ def init_google_oauth(app):
         client_id=app.config.get('GOOGLE_CLIENT_ID'),
         client_secret=app.config.get('GOOGLE_CLIENT_SECRET'),
         scope=["profile", "email"],
-        redirect_to="auth.google_callback", # Changed to a specific name within auth_bp
-        authorized_url="/authorized", # Relative to google_bp's prefix
-        redirect_url="/authorized"  # Relative to google_bp's prefix
+        redirect_to="/" # Redirect to the root after successful OAuth
     )
     # Register the google_bp with auth_bp
     auth_bp.register_blueprint(google_bp, url_prefix="/google")
@@ -39,34 +37,6 @@ def login():
         logger.debug("User not authorized, redirecting to Google login")
         return redirect(url_for("auth.google.login"))
     logger.debug("User already authorized, redirecting to frontend root")
-    return redirect('/')
-
-@auth_bp.route('/google/authorized') # This will be the actual callback URL within auth_bp
-def google_callback():
-    """Handle the OAuth callback"""
-    logger.debug("Google callback route accessed")
-    logger.debug(f"Request URL: {request.url}")
-    logger.debug(f"Request args: {request.args}")
-    
-    if not google.authorized:
-        logger.debug("User not authorized in callback, redirecting to Google login")
-        return redirect(url_for("auth.google.login"))
-    
-    # Get user info from Google
-    logger.debug("Fetching user info from Google")
-    resp = google.get("/oauth2/v2/userinfo")
-    if not resp.ok:
-        logger.error(f"Failed to fetch user info: {resp.status_code}")
-        return "Failed to fetch user info from Google", 400
-    
-    user_info = resp.json()
-    logger.debug(f"User info received: {user_info.get('email')}")
-    
-    # Store user info in session (main.py will handle user creation/update)
-    session['user_id'] = user_info.get('id') # Store Google ID temporarily
-    session['google_info'] = user_info # Store full info for main.py
-
-    # Redirect to the frontend root for React Router
     return redirect('/')
 
 @auth_bp.route('/logout')
