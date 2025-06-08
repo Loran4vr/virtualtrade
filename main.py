@@ -5,7 +5,7 @@ from auth import auth_bp, init_google_oauth
 from market_data import market_data_bp
 from portfolio import portfolio_bp
 from config import config
-from models import db, User, Portfolio, Transaction, Subscription # Import Subscription model
+from backend.models import db, User, Portfolio, Transaction, Subscription # Corrected import path
 from datetime import datetime, timedelta
 from decimal import Decimal
 from functools import wraps
