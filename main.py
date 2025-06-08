@@ -86,7 +86,7 @@ def create_app(config_name='default'):
 
         # Create session
         session['user_id'] = user.id
-        return False
+        return None # Return None to indicate successful authorization to Flask-Dance
     
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix='/auth')
