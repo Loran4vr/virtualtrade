@@ -113,6 +113,15 @@ Removed the parentheses `()` from `main:create_app()` in the `Dockerfile`'s `CMD
   3. Removed redundant and conflicting portfolio-related helper functions and API routes from `main.py` (e.g., `check_subscription`, `check_trading_limit`, `trading_limit_required`, `/api/portfolio/buy`, `/api/portfolio/sell`, `/api/portfolio`, `/api/transactions`) to centralize all portfolio logic in `portfolio.py`.
 - **Status**: 🟢 DEPLOYED - Changes deployed to remote, awaiting user redeployment and verification.
 
+### 8. Database Persistence Configuration
+- **Issue**: User data and portfolio were not persisting due to the database defaulting to an in-memory SQLite instance.
+- **Diagnosis**: `SQLALCHEMY_DATABASE_URI` was not explicitly set in `config.py`, causing data loss on application restarts or across different Gunicorn worker processes.
+- **Fix Attempts**:
+  1. Configured `SQLALCHEMY_DATABASE_URI` in `config.py` to load from the `DATABASE_URL` environment variable for production (as provided by Render).
+  2. Set `SQLALCHEMY_DATABASE_URI` to a local file (`sqlite:///site.db`) for development.
+  3. Set `SQLALCHEMY_TRACK_MODIFICATIONS` to `False` as a best practice.
+- **Status**: 🟢 DEPLOYED - Changes deployed to remote, awaiting user redeployment and verification.
+
 ## Current Status
 - OAuth flow successfully obtains token from Google
 - Session configuration is properly set

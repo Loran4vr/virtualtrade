@@ -10,6 +10,10 @@ class Config:
     GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
     ALPHA_VANTAGE_API_KEY = os.environ.get('ALPHA_VANTAGE_API_KEY', '')
     
+    # Database configuration
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
     # Session configuration
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
@@ -19,6 +23,7 @@ class Config:
 class DevelopmentConfig(Config):
     DEBUG = True
     SESSION_COOKIE_SECURE = False  # Allow non-HTTPS in development
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///site.db'  # Local SQLite database for development
 
 class ProductionConfig(Config):
     DEBUG = False
@@ -28,6 +33,7 @@ class ProductionConfig(Config):
     SESSION_COOKIE_HTTPONLY = True
     REMEMBER_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'None'
+    # Database URI will be picked from DATABASE_URL env variable which is set in Render
 
 # Configuration dictionary
 config = {
