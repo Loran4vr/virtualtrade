@@ -55,7 +55,13 @@ function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/login/google/authorized" element={<Navigate to="/" replace />} />
       <Route path="/google/authorized" element={<Navigate to="/" replace />} />
-      <Route path="/profile" element={<Profile />} />
+      <Route path="/profile" element={
+        <ProtectedRoute>
+          <Layout>
+            <Profile />
+          </Layout>
+        </ProtectedRoute>
+      } />
       <Route path="/" element={
         <ProtectedRoute>
           <Layout>
