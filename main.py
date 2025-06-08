@@ -437,6 +437,7 @@ def create_app(config_name='default'):
 if __name__ == '__main__':
     # Use production config if FLASK_ENV is set to production
     config_name = os.getenv('FLASK_ENV', 'development')
+    logger.debug(f"Loading Flask configuration: {config_name}") # Added debug log
     app = create_app(config_name)
     logger.info("Starting Flask development server...")
     app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
