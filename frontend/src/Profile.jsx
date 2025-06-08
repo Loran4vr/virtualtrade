@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -11,7 +12,7 @@ import Box from '@mui/material/Box';
 
 export default function Profile() {
   const { user } = useAuth();
-  const [notifications, setNotifications] = React.useState(true);
+  const [notifications, setNotifications] = useState(true);
 
   return (
     <Box sx={{ maxWidth: 500, mx: 'auto', mt: 4 }}>
