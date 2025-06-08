@@ -31,6 +31,7 @@ RUN mkdir -p /app/static
 
 # Copy built frontend files
 COPY --from=frontend-builder /app/frontend/build/static/ /app/static/
+COPY --from=frontend-builder /app/frontend/build/index.html /app/static/index.html
 
 # Verify static files exist
 RUN ls -la /app/static
