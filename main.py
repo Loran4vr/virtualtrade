@@ -143,11 +143,8 @@ def create_app(config_name='default'):
         return decorated_function
     
     # Catch-all route for React Router (only for non-static, non-api, non-auth)
-    @app.route('/', defaults={'path': ''})
-    @app.route('/<path:path>')
-    def index(path):
-        if path.startswith('api/') or path.startswith('auth/'):
-            return 'Not Found', 404
+    @app.route('/')
+    def index():
         return send_from_directory(app.static_folder, 'index.html')
     
     # API routes
@@ -397,6 +394,10 @@ def create_app(config_name='default'):
     # Error handlers
     @app.errorhandler(404)
     def not_found(e):
+        # If it's a request for a static file that wasn't found, return a true 404
+        if request.path.startswith('/static/'):
+            return 'Static file not found', 404
+        # Otherwise, serve the React app's index.html for client-side routing
         return send_from_directory(app.static_folder, 'index.html')
     
     @app.errorhandler(500)
