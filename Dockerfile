@@ -7,6 +7,7 @@ COPY frontend/package.json ./
 RUN npm install
 
 COPY frontend/ ./
+ENV PUBLIC_URL=.
 RUN npm run build
 RUN ls -la /app/frontend/build
 
