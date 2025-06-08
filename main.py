@@ -13,8 +13,7 @@ from flask_dance.contrib.google import make_google_blueprint, google
 from flask_dance.consumer import oauth_authorized
 from sqlalchemy.orm.exc import NoResultFound # Added for oauth_authorized handler
 import logging
-import stripe
-from backend.subscription import init_stripe
+from backend.subscription import init_stripe, SUBSCRIPTION_PLANS
 
 # Configure logging
 logging.basicConfig(
@@ -28,34 +27,6 @@ logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
-
-# Subscription plans
-SUBSCRIPTION_PLANS = {
-    'basic': {
-        'name': 'Basic',
-        'price': 100,
-        'credit': 100000,  # 1 lakh
-        'duration_days': 30
-    },
-    'standard': {
-        'name': 'Standard',
-        'price': 250,
-        'credit': 250000,  # 2.5 lakhs
-        'duration_days': 30
-    },
-    'premium': {
-        'name': 'Premium',
-        'price': 475,
-        'credit': 500000,  # 5 lakhs
-        'duration_days': 30
-    },
-    'ultimate': {
-        'name': 'Ultimate',
-        'price': 925,
-        'credit': 1000000,  # 10 lakhs
-        'duration_days': 30
-    }
-}
 
 # Free tier limit
 FREE_TIER_LIMIT = 1000000  # 10 lakhs
@@ -77,6 +48,9 @@ def create_app(config_name='default'):
 
     # Initialize Google OAuth
     init_google_oauth(app)
+
+    # Initialize Stripe (moved from module level)
+    init_stripe(app)
 
     # Handle Google OAuth callback for user creation/login
     @oauth_authorized.connect_via(app) # Connect via the app instance

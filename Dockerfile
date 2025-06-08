@@ -27,6 +27,9 @@ RUN pip install --no-cache-dir -r requirements.prod.txt
 # Copy the rest of the application
 COPY . .
 
+# Verify backend directory contents
+RUN ls -la /app/backend
+
 # Run database initialization script
 RUN python init_db.py
 
@@ -44,6 +47,7 @@ RUN ls -la /app/static
 ENV FLASK_APP=main.py
 ENV FLASK_ENV=production
 ENV PORT=5000
+ENV PYTHONPATH=/app:$PYTHONPATH
 
 # Expose the port
 EXPOSE 5000
