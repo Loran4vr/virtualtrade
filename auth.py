@@ -37,7 +37,7 @@ def login():
     logger.debug("Login route accessed")
     if not google.authorized:
         logger.debug("User not authorized, redirecting to Google login")
-        return redirect(url_for("google.login"))
+        return redirect(url_for("auth.google.login"))
     logger.debug("User already authorized, redirecting to frontend root")
     return redirect('/')
 
@@ -50,7 +50,7 @@ def google_callback():
     
     if not google.authorized:
         logger.debug("User not authorized in callback, redirecting to Google login")
-        return redirect(url_for("google.login"))
+        return redirect(url_for("auth.google.login"))
     
     # Get user info from Google
     logger.debug("Fetching user info from Google")
