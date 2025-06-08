@@ -30,11 +30,10 @@ COPY . .
 RUN mkdir -p /app/static
 
 # Copy built frontend files
-COPY --from=frontend-builder /app/frontend/build/ /app/static/
+COPY --from=frontend-builder /app/frontend/build/static/ /app/static/
 
 # Verify static files exist
 RUN ls -la /app/static
-RUN ls -la /app/static/js
 
 # Set environment variables
 ENV FLASK_APP=main.py
