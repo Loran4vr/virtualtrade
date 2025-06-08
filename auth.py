@@ -23,7 +23,7 @@ def init_google_oauth(app):
         client_id=app.config.get('GOOGLE_CLIENT_ID'),
         client_secret=app.config.get('GOOGLE_CLIENT_SECRET'),
         scope=["profile", "email"],
-        redirect_to="/" # Redirect to the root after successful OAuth
+        redirect_to="index" # Redirect to the root endpoint 'index' after successful OAuth
     )
     # Register the google_bp with auth_bp
     auth_bp.register_blueprint(google_bp)
