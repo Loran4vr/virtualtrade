@@ -16,6 +16,8 @@ import logging
 from backend.subscription import init_stripe, SUBSCRIPTION_PLANS
 from whitenoise import WhiteNoise
 
+print("##### DEBUG: main.py file has been loaded and executed! #####") # Added top-level print
+
 # Configure logging
 logging.basicConfig(
     level=logging.DEBUG,
@@ -33,6 +35,12 @@ load_dotenv()
 FREE_TIER_LIMIT = 1000000  # 10 lakhs
 
 def create_app():
+    # NEW DEBUG: Print all environment variables at the start of create_app
+    print("DEBUG: create_app: os.environ content:")
+    for key, value in os.environ.items():
+        print(f"  {key}={value}")
+    print("DEBUG: create_app: End of os.environ content")
+
     app = Flask(__name__)
     
     # Determine config_name based on environment variable directly inside create_app
