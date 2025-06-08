@@ -45,7 +45,7 @@ SUBSCRIPTION_PLANS = {
 FREE_TIER_LIMIT = 1000000  # 10 lakhs
 
 def create_app(config_name='default'):
-    app = Flask(__name__, static_folder='static', static_url_path='')
+    app = Flask(__name__, static_folder='static', static_url_path='/static')
     
     # Load configuration
     app.config.from_object(config[config_name])
