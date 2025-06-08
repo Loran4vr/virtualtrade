@@ -15,6 +15,7 @@ from sqlalchemy.orm.exc import NoResultFound # Added for oauth_authorized handle
 import logging
 from backend.subscription import init_stripe, SUBSCRIPTION_PLANS
 from whitenoise import WhiteNoise
+import flask_dance.consumer.storage
 
 print("##### DEBUG: main.py file has been loaded and executed! #####") # Added top-level print
 
@@ -96,8 +97,8 @@ def create_app():
         client_id=app.config.get('GOOGLE_CLIENT_ID'),
         client_secret=app.config.get('GOOGLE_CLIENT_SECRET'),
         scope=["profile", "email"],
-        redirect_url="https://virtualtrade.onrender.com/auth/google/authorized", # Explicitly set the redirect_url
-        redirect_to="index" # Redirect to the root endpoint 'index' after successful OAuth
+        redirect_to="index", # Redirect to the root endpoint 'index' after successful OAuth
+        storage=flask_dance.consumer.storage.SessionStorage() # Use session storage explicitly
     )
     app.register_blueprint(google_bp, url_prefix='/auth') # Register google_bp with app directly, url_prefix corrected to '/auth'
     logger.debug("Google OAuth blueprint registered directly with app")
@@ -120,7 +121,7 @@ def create_app():
     init_stripe(app)
 
     # Handle Google OAuth callback for user creation/login
-    @oauth_authorized.connect_via(app) # Connect via the app instance
+    @oauth_authorized.connect_via(google_bp) # Connect via the blueprint instance
     def google_logged_in(blueprint, token):
         logger.debug(f"google_logged_in: Received token: {token is not None}")
         if not token:
@@ -156,6 +157,10 @@ def create_app():
         session['user_id'] = user.id
         session.permanent = True
         session.modified = True  # Ensure session is marked as modified
+        
+        # Store OAuth state in session
+        session['oauth_state'] = request.args.get('state')
+        logger.debug(f"google_logged_in: Stored OAuth state in session: {session.get('oauth_state')}")
         
         # Create response with explicit cookie settings
         response = make_response(redirect('/'))

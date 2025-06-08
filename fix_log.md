@@ -82,33 +82,34 @@ Removed the parentheses `()` from `main:create_app()` in the `Dockerfile`'s `CMD
      - Mark session as modified
      - Create response with explicit cookie settings
      - Set session cookie with proper security settings
-- **Status**: 🔄 TESTING - Changes deployed, awaiting verification
+  3. Added explicit state handling:
+     - Using Flask-Dance's `SessionStorage` explicitly
+     - Storing OAuth state in session
+     - Connecting OAuth handler to blueprint instead of app
+- **Status**: 🔄 TESTING - Latest changes deployed, awaiting verification
 
-### 3. Environment Configuration
-- **Issue**: Production configuration not being loaded correctly
+### 5. OAuth State Management
+- **Issue**: OAuth state not being preserved between requests
 - **Fix Attempts**:
-  1. Modified `create_app()` to determine config based on environment variable
-  2. Added debug logging for environment variables and configuration
-- **Status**: ✅ RESOLVED - Logs confirm `FLASK_ENV=production` and correct cookie settings
-
-### 4. Blueprint Registration
-- **Issue**: Multiple blueprint registration causing conflicts
-- **Fix Attempts**:
-  1. Refactored `auth.py` into blueprint factory
-  2. Corrected blueprint registration in `main.py`
-- **Status**: ✅ RESOLVED - Blueprints now correctly registered
+  1. Added explicit state storage in session
+  2. Using Flask-Dance's built-in session storage
+  3. Connecting OAuth handler to blueprint instance
+- **Status**: 🔄 TESTING - Latest changes deployed, awaiting verification
 
 ## Current Status
 - OAuth flow successfully obtains token from Google
 - Session configuration is properly set
 - Cookie settings are correct for cross-site requests
 - Debug logging is in place to track session state
+- Explicit state handling added to session
+- Using Flask-Dance's session storage
 
 ## Next Steps
 1. Monitor session persistence after OAuth login
 2. Verify user authentication state is maintained
 3. Test cross-site cookie handling
 4. Monitor for any new session-related issues
+5. Verify OAuth state is properly maintained
 
 ## Debug Logging Points
 1. Session creation in `google_logged_in`
@@ -116,10 +117,13 @@ Removed the parentheses `()` from `main:create_app()` in the `Dockerfile`'s `CMD
 3. Environment variables at startup
 4. OAuth state management
 5. User authentication status
+6. OAuth state storage and retrieval
 
 ## Important Notes
 - All cookie settings must be consistent across the application
 - Session must be marked as modified when changed
 - Cross-site requests require `SameSite=None`
 - Secure cookies require HTTPS
-- Session lifetime is set to 7 days 
+- Session lifetime is set to 7 days
+- OAuth state must be preserved in session
+- Flask-Dance session storage is explicitly configured 
