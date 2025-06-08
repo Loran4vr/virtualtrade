@@ -32,8 +32,12 @@ load_dotenv()
 # Free tier limit
 FREE_TIER_LIMIT = 1000000  # 10 lakhs
 
-def create_app(config_name='default'):
+def create_app():
     app = Flask(__name__)
+    
+    # Determine config_name based on environment variable directly inside create_app
+    config_name = os.getenv('FLASK_ENV', 'development')
+    print(f"DEBUG: create_app: Loading Flask configuration: {config_name}") # New print/log here
     
     # Use WhiteNoise to serve static files
     app.wsgi_app = WhiteNoise(app.wsgi_app, root=os.path.join(app.root_path, 'static'))
@@ -439,9 +443,8 @@ def create_app(config_name='default'):
 
 if __name__ == '__main__':
     # Use production config if FLASK_ENV is set to production
-    config_name = os.getenv('FLASK_ENV', 'development')
-    print(f"DEBUG: main: Loading Flask configuration: {config_name}") # Replaced with print
-    app = create_app(config_name)
+    # The config_name is now determined inside create_app()
+    app = create_app() # Call without argument
     logger.info("Starting Flask development server...")
     app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
 
