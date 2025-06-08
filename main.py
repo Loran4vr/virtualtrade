@@ -78,8 +78,21 @@ def create_app():
     # Debug print cookie settings
     logger.debug(f"Cookie settings: Secure={app.config.get('SESSION_COOKIE_SECURE')}, HttpOnly={app.config.get('SESSION_COOKIE_HTTPONLY')}, SameSite={app.config.get('SESSION_COOKIE_SAMESITE')}")
 
-    # Initialize Google OAuth
-    init_google_oauth(app)
+    # Initialize Google OAuth directly in main.py
+    # Set environment variables for development (if DEBUG is True)
+    if app.config.get('DEBUG'):
+        os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+    os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
+    
+    # Create the Google blueprint
+    google_bp = make_google_blueprint(
+        client_id=app.config.get('GOOGLE_CLIENT_ID'),
+        client_secret=app.config.get('GOOGLE_CLIENT_SECRET'),
+        scope=["profile", "email"],
+        redirect_to="index" # Redirect to the root endpoint 'index' after successful OAuth
+    )
+    app.register_blueprint(google_bp, url_prefix='/auth/google') # Register google_bp with app directly
+    logger.debug("Google OAuth blueprint registered directly with app")
 
     # Initialize Stripe (moved from module level)
     init_stripe(app)
@@ -141,7 +154,7 @@ def create_app():
         return jsonify({'session': dict(session)})
 
     # Register blueprints
-    app.register_blueprint(auth_bp, url_prefix='/auth')
+    app.register_blueprint(auth_bp, url_prefix='/auth') # auth_bp now contains only /login, /logout, /user
     app.register_blueprint(market_data_bp, url_prefix='/api/market')
     app.register_blueprint(portfolio_bp, url_prefix='/api/portfolio')
 

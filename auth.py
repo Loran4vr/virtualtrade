@@ -12,33 +12,6 @@ logger = logging.getLogger(__name__)
 
 auth_bp = Blueprint('auth', __name__)
 
-# Global flag to prevent multiple registrations of google_bp with auth_bp
-google_bp_registered = False
-
-def init_google_oauth(app):
-    """Initialize Google OAuth with Flask-Dance"""
-    logger.debug("Initializing Google OAuth")
-    # Set environment variables for development
-    if app.config.get('DEBUG'):
-        os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-    os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
-    
-    # Create the Google blueprint
-    google_bp = make_google_blueprint(
-        client_id=app.config.get('GOOGLE_CLIENT_ID'),
-        client_secret=app.config.get('GOOGLE_CLIENT_SECRET'),
-        scope=["profile", "email"],
-        redirect_to="index" # Redirect to the root endpoint 'index' after successful OAuth
-    )
-
-    # Register the google_bp with auth_bp ONLY if not already registered
-    if not google_bp_registered:
-        auth_bp.register_blueprint(google_bp)
-        google_bp_registered = True
-        logger.debug("Google OAuth blueprint registered with auth_bp")
-    else:
-        logger.debug("Google OAuth blueprint already registered with auth_bp, skipping.")
-
 @auth_bp.route('/login')
 def login():
     """Redirect to Google OAuth login"""
