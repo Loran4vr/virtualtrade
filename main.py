@@ -56,6 +56,13 @@ def create_app():
     # Load configuration
     app.config.from_object(config[config_name])
     
+    # Explicit session configuration
+    app.config['SESSION_COOKIE_SECURE'] = True
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Required for cross-site redirects
+    app.config['SESSION_COOKIE_DOMAIN'] = None  # Let Flask determine the domain
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)  # Session lasts 7 days
+    
     # Debug print actual cookie settings from app.config
     print(f"DEBUG: Flask app.config cookie settings: Secure={app.config.get('SESSION_COOKIE_SECURE')}, HttpOnly={app.config.get('SESSION_COOKIE_HTTPONLY')}, SameSite={app.config.get('SESSION_COOKIE_SAMESITE')}") # Added print
     
@@ -145,22 +152,27 @@ def create_app():
             logger.debug(f"google_logged_in: Created new user: {user.email} (ID: {user.id})")
 
         # Create session
+        session.clear()  # Clear any existing session data
         session['user_id'] = user.id
         session.permanent = True
+        session.modified = True  # Ensure session is marked as modified
+        
+        # Create response with explicit cookie settings
+        response = make_response(redirect('/'))
+        response.set_cookie(
+            'session',
+            session.get_cookie_value(),
+            secure=True,
+            httponly=True,
+            samesite='None',
+            max_age=timedelta(days=7)
+        )
+        
         logger.debug(f"google_logged_in: Session user_id set to {session.get('user_id')}. Session permanent: {session.permanent}")
         logger.debug(f"google_logged_in: User {user.email} successfully logged in, user_id: {user.id}")
+        logger.debug(f"google_logged_in: Full session after setting user_id: {dict(session)}")
 
-        # NEW DEBUG PRINTS:
-        print(f"DEBUG: google_logged_in: request.url = {request.url}")
-        print(f"DEBUG: google_logged_in: request.url_root = {request.url_root}")
-        print(f"DEBUG: google_logged_in: request.host = {request.host}")
-        print(f"DEBUG: google_logged_in: request.is_secure = {request.is_secure}")
-        print(f"DEBUG: google_logged_in: X-Forwarded-Proto = {request.headers.get('X-Forwarded-Proto')}")
-        print(f"DEBUG: google_logged_in: X-Forwarded-Host = {request.headers.get('X-Forwarded-Host')}")
-        print(f"DEBUG: google_logged_in: Full session after setting user_id: {dict(session)}") # Use dict(session) to ensure it's logged
-
-        # Explicitly redirect to ensure session cookie is sent
-        return redirect('/')
+        return response
     
     # Test session route
     @app.route('/test-session')
