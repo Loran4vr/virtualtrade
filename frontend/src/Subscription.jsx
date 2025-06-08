@@ -59,30 +59,30 @@ export default function Subscription() {
       description: 'Subscription purchase is currently unavailable.',
       variant: 'info',
     });
-    return;
 
     setPurchasing(true);
     try {
-      const response = await fetch('/api/subscription/purchase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan_id: planId }),
-      });
-      const data = await response.json();
+      // The actual fetch call for purchase is commented out/removed for now
+      // const response = await fetch('/api/subscription/purchase', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ plan_id: planId }),
+      // });
+      // const data = await response.json();
       
-      if (response.ok) {
-        toast({
-          title: 'Success',
-          description: 'Subscription purchased successfully',
-        });
-        fetchSubscriptionStatus();
-      } else {
-        toast({
-          title: 'Error',
-          description: data.error || 'Failed to purchase subscription',
-          variant: 'destructive',
-        });
-      }
+      // if (response.ok) {
+      //   toast({
+      //     title: 'Success',
+      //     description: 'Subscription purchased successfully',
+      //   });
+      //   fetchSubscriptionStatus();
+      // } else {
+      //   toast({
+      //     title: 'Error',
+      //     description: data.error || 'Failed to purchase subscription',
+      //     variant: 'destructive',
+      //   });
+      // }
     } catch (error) {
       console.error('Failed to purchase subscription:', error);
       toast({
