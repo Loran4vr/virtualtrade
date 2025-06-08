@@ -1,4 +1,5 @@
 import { createContext, useState, useContext, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const AuthContext = createContext();
 
@@ -9,6 +10,8 @@ export function useAuth() {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [logoutLoading, setLogoutLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     let mounted = true;
@@ -53,34 +56,33 @@ export function AuthProvider({ children }) {
 
   const login = () => {
     console.log('AuthProvider: Initiating login');
-    // Use a more reliable way to handle navigation
-    const loginUrl = '/auth/login';
-    if (window.location.pathname !== loginUrl) {
-      window.location.href = loginUrl;
-    }
+    window.location.href = '/auth/login';
   };
 
   const logout = async () => {
+    if (logoutLoading) return;
+    
     console.log('AuthProvider: Initiating logout');
+    setLogoutLoading(true);
+    
     try {
       await fetch('/auth/logout', {
         method: 'POST',
         credentials: 'include'
       });
       setUser(null);
-      // Use a more reliable way to handle navigation
-      const loginUrl = '/login';
-      if (window.location.pathname !== loginUrl) {
-        window.location.href = loginUrl;
-      }
+      navigate('/login');
     } catch (error) {
       console.error('AuthProvider: Logout failed:', error);
+    } finally {
+      setLogoutLoading(false);
     }
   };
 
   const value = {
     user,
     loading,
+    logoutLoading,
     login,
     logout,
     isAuthenticated: !!user

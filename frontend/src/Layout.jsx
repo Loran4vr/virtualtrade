@@ -24,6 +24,7 @@ import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import Tooltip from '@mui/material/Tooltip';
+import CircularProgress from '@mui/material/CircularProgress';
 
 const drawerWidth = 240;
 
@@ -35,7 +36,7 @@ const navigation = [
 ];
 
 export default function Layout({ children }) {
-  const { user, logout } = useAuth();
+  const { user, logout, logoutLoading } = useAuth();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
@@ -83,8 +84,12 @@ export default function Layout({ children }) {
           <Typography variant="body1">{user?.name}</Typography>
           <Typography variant="body2" color="text.secondary">{user?.email}</Typography>
         </Box>
-        <IconButton color="inherit" onClick={logout} sx={{ ml: 'auto' }}>
-          <LogoutIcon />
+        <IconButton color="inherit" onClick={logout} disabled={logoutLoading} sx={{ ml: 'auto' }}>
+          {logoutLoading ? (
+            <CircularProgress size={24} color="inherit" />
+          ) : (
+            <LogoutIcon />
+          )}
         </IconButton>
       </Box>
     </div>

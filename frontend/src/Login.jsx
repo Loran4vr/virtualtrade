@@ -3,6 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { Button } from './button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Paper from '@mui/material/Paper';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#1976d2',
+    },
+    background: {
+      default: '#f5f5f5',
+    },
+  },
+});
 
 export default function Login() {
   const { login, isAuthenticated, loading } = useAuth();
@@ -16,31 +31,70 @@ export default function Login() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <p>Loading...</p>
-      </div>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+        <Typography variant="h6">Loading...</Typography>
+      </Box>
     );
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
-      <Card className="w-[350px]">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">VirtualTrade</CardTitle>
-          <CardDescription>
-            Paper trading platform for Indian equity markets
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center">
-          <div className="mb-6 text-center">
-            <p className="text-sm text-muted-foreground mb-4">
-              Practice trading with virtual money without any risk.
-              Track your performance and learn to trade.
-            </p>
-          </div>
-          <Button onClick={login} className="w-full">
+    <ThemeProvider theme={theme}>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: 'background.default',
+          py: 4,
+        }}
+      >
+        <Paper
+          elevation={3}
+          sx={{
+            width: '100%',
+            maxWidth: 400,
+            p: 4,
+            borderRadius: 2,
+          }}
+        >
+          <Box sx={{ textAlign: 'center', mb: 4 }}>
+            <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+              VirtualTrade
+            </Typography>
+            <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+              Paper trading platform for Indian equity markets
+            </Typography>
+          </Box>
+
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="body1" color="text.secondary" paragraph>
+              Practice trading with virtual money without any risk. Track your performance and learn to trade in a safe environment.
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              • Real-time market data
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              • Virtual portfolio management
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              • Performance analytics
+            </Typography>
+          </Box>
+
+          <Button
+            onClick={login}
+            className="w-full"
+            sx={{
+              py: 1.5,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1,
+            }}
+          >
             <svg
-              className="mr-2 h-4 w-4"
+              className="h-5 w-5"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 48 48"
             >
@@ -63,12 +117,15 @@ export default function Login() {
             </svg>
             Sign in with Google
           </Button>
-        </CardContent>
-        <CardFooter className="flex justify-center text-xs text-muted-foreground">
-          No phone verification required
-        </CardFooter>
-      </Card>
-    </div>
+
+          <Box sx={{ mt: 3, textAlign: 'center' }}>
+            <Typography variant="caption" color="text.secondary">
+              No phone verification required • Free to use
+            </Typography>
+          </Box>
+        </Paper>
+      </Box>
+    </ThemeProvider>
   );
 }
 
