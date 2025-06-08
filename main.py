@@ -96,7 +96,8 @@ def create_app(config_name='default'):
         session.permanent = True
         logger.debug(f"google_logged_in: Session user_id set to {session.get('user_id')}. Session permanent: {session.permanent}")
         logger.debug(f"google_logged_in: User {user.email} successfully logged in, user_id: {user.id}")
-        return None # Return None to indicate successful authorization to Flask-Dance
+        # Explicitly redirect to ensure session cookie is sent
+        return redirect('/')
     
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix='/auth')
