@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, session, redirect, url_for, request, make_response
+from flask import Flask, render_template, jsonify, session, redirect, url_for, request, make_response, send_from_directory
 import os
 from dotenv import load_dotenv
 from auth import auth_bp, init_google_oauth
@@ -140,10 +140,11 @@ def create_app(config_name='default'):
     @app.route('/')
     def index():
         logger.debug(f"Handling request for path: {request.path}")
-        # WhiteNoise will serve index.html directly from the root if it exists
-        # No need for send_from_directory here, return an empty string or basic message
-        # as WhiteNoise will intercept the request for index.html
-        return "" # Or return app.send_static_file('index.html') if you still want flask to handle it explicitly, but WhiteNoise is designed to take over.
+        response = make_response(send_from_directory(os.path.join(app.root_path, 'static'), 'index.html'))
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
     
     # API routes
     @app.route('/api/health')
