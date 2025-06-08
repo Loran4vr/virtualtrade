@@ -13,7 +13,7 @@ class Config:
     # Session configuration
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SAMESITE = 'None'
     PERMANENT_SESSION_LIFETIME = 3600  # 1 hour
 
 class DevelopmentConfig(Config):
