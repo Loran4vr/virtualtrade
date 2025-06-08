@@ -53,26 +53,21 @@ def logout():
 def get_user():
     """Get the current user info"""
     logger.debug("User info route accessed")
-    logger.info(f"DEBUG: get_user: Full session CONTENT: {dict(session)}")
+    if 'user_id' not in session:
+        logger.debug(f"get_user: session['user_id'] is {session.get('user_id')}. No user_id in session.")
+        return jsonify({'authenticated': False}), 401
+    
+    # Fetch user from DB using user_id from session
+    from backend.models import User # Import here to avoid circular dependency
+    user = User.query.get(session['user_id'])
+    if not user:
+        logger.debug(f"User with ID {session['user_id']} not found in DB")
+        return jsonify({'authenticated': False}), 401
 
-    authenticated = False
-    user_data = {}
-
-    if 'user_id' in session:
-        from backend.models import User # Import here to avoid circular dependency
-        user = User.query.get(session['user_id'])
-        if user:
-            authenticated = True
-            user_data = user.to_dict()
-            logger.debug(f"User found in session: {user.email}")
-        else:
-            logger.debug(f"User with ID {session['user_id']} not found in DB - clearing session user_id")
-            session.pop('user_id', None) # Clear if user not found in DB
-    else:
-        logger.debug(f"get_user: session['user_id'] is None. No user_id in session.")
-
+    logger.debug(f"User found in session: {user.email}")
+    # The main.py will handle fetching subscription and trading limit
     return jsonify({
-        'authenticated': authenticated,
-        'user': user_data
-    }), 200 if authenticated else 401
+        'authenticated': True,
+        'user': user.to_dict()
+    })
 
