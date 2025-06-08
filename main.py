@@ -60,6 +60,9 @@ def create_app(config_name='default'):
     else:
         logger.debug("SECRET_KEY not loaded or is None.")
 
+    # Debug print cookie settings
+    logger.debug(f"Cookie settings: Secure={app.config.get('SESSION_COOKIE_SECURE')}, HttpOnly={app.config.get('SESSION_COOKIE_HTTPONLY')}, SameSite={app.config.get('SESSION_COOKIE_SAMESITE')}")
+
     # Initialize Google OAuth
     init_google_oauth(app)
 
@@ -107,6 +110,12 @@ def create_app(config_name='default'):
         # Explicitly redirect to ensure session cookie is sent
         return redirect('/')
     
+    # Test session route
+    @app.route('/test-session')
+    def test_session():
+        session['test'] = 'Hello, World!'
+        return jsonify({'session': dict(session)})
+
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(market_data_bp, url_prefix='/api/market')
