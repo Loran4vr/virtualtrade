@@ -53,6 +53,13 @@ def create_app(config_name='default'):
     # Initialize database
     db.init_app(app)
 
+    # Debug print SECRET_KEY status
+    secret_key = app.config.get('SECRET_KEY')
+    if secret_key:
+        logger.debug(f"SECRET_KEY loaded. Length: {len(secret_key)}. Masked: {secret_key[:5]}...{secret_key[-5:]}")
+    else:
+        logger.debug("SECRET_KEY not loaded or is None.")
+
     # Initialize Google OAuth
     init_google_oauth(app)
 
@@ -96,6 +103,7 @@ def create_app(config_name='default'):
         session.permanent = True
         logger.debug(f"google_logged_in: Session user_id set to {session.get('user_id')}. Session permanent: {session.permanent}")
         logger.debug(f"google_logged_in: User {user.email} successfully logged in, user_id: {user.id}")
+        logger.debug(f"google_logged_in: Full session after setting user_id: {session}") # Added debug log
         # Explicitly redirect to ensure session cookie is sent
         return redirect('/')
     
