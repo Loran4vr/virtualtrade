@@ -122,6 +122,21 @@ Removed the parentheses `()` from `main:create_app()` in the `Dockerfile`'s `CMD
   3. Set `SQLALCHEMY_TRACK_MODIFICATIONS` to `False` as a best practice.
 - **Status**: 🟢 DEPLOYED - Changes deployed to remote, awaiting user redeployment and verification.
 
+### 9. Frontend Build Failure - Unreachable Code Error
+- **Issue**: The frontend build failed with an ESLint `unreachable code` error in `src/Subscription.jsx`.
+- **Diagnosis**: A `return;` statement was added to `handlePurchase` function to temporarily disable purchase, causing subsequent code to be flagged as unreachable by ESLint.
+- **Fix Attempts**:
+  1. Removed the explicit `return;` statement from `handlePurchase` in `frontend/src/Subscription.jsx`.
+  2. Commented out the `fetch` call for purchasing within `handlePurchase` to effectively disable it without causing unreachable code errors.
+- **Status**: 🟢 DEPLOYED - Changes deployed to remote, awaiting user redeployment and verification.
+
+### 10. `AttributeError: 'Transaction' object has no attribute 'timestamp'`
+- **Issue**: The application crashed with an `AttributeError` when trying to access `Transaction.timestamp`.
+- **Diagnosis**: The `Transaction` model in `backend/models.py` uses `created_at` for the timestamp field, but `portfolio.py` was attempting to order and filter transactions using `timestamp`.
+- **Fix Attempts**:
+  1. Modified `portfolio.py` to correctly use `Transaction.created_at` instead of `Transaction.timestamp` when querying and filtering transactions.
+- **Status**: 🟢 DEPLOYED - Changes deployed to remote, awaiting user redeployment and verification.
+
 ## Current Status
 - OAuth flow successfully obtains token from Google
 - Session configuration is properly set

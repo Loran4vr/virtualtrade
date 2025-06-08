@@ -219,7 +219,7 @@ def sell_stock():
 def get_transactions():
     user_id = get_user_id()
     # Fetch transactions from the database
-    transactions = Transaction.query.filter_by(user_id=user_id).order_by(Transaction.timestamp.desc()).all()
+    transactions = Transaction.query.filter_by(user_id=user_id).order_by(Transaction.created_at.desc()).all()
 
     # Optional filtering by date range (frontend typically handles this, but backend can support)
     start_date_str = request.args.get('start_date')
@@ -229,11 +229,11 @@ def get_transactions():
 
     if start_date_str:
         start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
-        filtered_transactions = [t for t in filtered_transactions if t.timestamp.date() >= start_date.date()]
+        filtered_transactions = [t for t in filtered_transactions if t.created_at.date() >= start_date.date()]
 
     if end_date_str:
         end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
-        filtered_transactions = [t for t in filtered_transactions if t.timestamp.date() <= end_date.date()]
+        filtered_transactions = [t for t in filtered_transactions if t.created_at.date() <= end_date.date()]
 
     return jsonify({'transactions': [t.to_dict() for t in filtered_transactions]})
 
