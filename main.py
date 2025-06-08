@@ -113,7 +113,16 @@ def create_app():
         session.permanent = True
         logger.debug(f"google_logged_in: Session user_id set to {session.get('user_id')}. Session permanent: {session.permanent}")
         logger.debug(f"google_logged_in: User {user.email} successfully logged in, user_id: {user.id}")
-        logger.debug(f"google_logged_in: Full session after setting user_id: {session}") # Added debug log
+
+        # NEW DEBUG PRINTS:
+        print(f"DEBUG: google_logged_in: request.url = {request.url}")
+        print(f"DEBUG: google_logged_in: request.url_root = {request.url_root}")
+        print(f"DEBUG: google_logged_in: request.host = {request.host}")
+        print(f"DEBUG: google_logged_in: request.is_secure = {request.is_secure}")
+        print(f"DEBUG: google_logged_in: X-Forwarded-Proto = {request.headers.get('X-Forwarded-Proto')}")
+        print(f"DEBUG: google_logged_in: X-Forwarded-Host = {request.headers.get('X-Forwarded-Host')}")
+        print(f"DEBUG: google_logged_in: Full session after setting user_id: {dict(session)}") # Use dict(session) to ensure it's logged
+
         # Explicitly redirect to ensure session cookie is sent
         return redirect('/')
     
