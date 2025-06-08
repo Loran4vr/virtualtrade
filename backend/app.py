@@ -14,7 +14,7 @@ from functools import wraps
 
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='/app/static', static_url_path='/')
 app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///virtualtrade.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -102,6 +102,12 @@ def trading_limit_required(f):
 
 @app.route('/')
 def index():
+    return app.send_static_file('index.html')
+
+@app.errorhandler(404)
+def not_found(e):
+    # For any route not found by Flask, serve the React app's index.html
+    # This allows client-side routing to take over
     return app.send_static_file('index.html')
 
 @app.route('/auth/login')
