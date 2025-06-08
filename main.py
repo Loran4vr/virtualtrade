@@ -1,4 +1,4 @@
-from flask import Flask, render_template, send_from_directory, jsonify, session, redirect, url_for, request, make_response
+from flask import Flask, render_template, jsonify, session, redirect, url_for, request, make_response
 import os
 from dotenv import load_dotenv
 from auth import auth_bp, init_google_oauth
@@ -14,6 +14,7 @@ from flask_dance.consumer import oauth_authorized
 from sqlalchemy.orm.exc import NoResultFound # Added for oauth_authorized handler
 import logging
 from backend.subscription import init_stripe, SUBSCRIPTION_PLANS
+from whitenoise import WhiteNoise
 
 # Configure logging
 logging.basicConfig(
@@ -32,8 +33,13 @@ load_dotenv()
 FREE_TIER_LIMIT = 1000000  # 10 lakhs
 
 def create_app(config_name='default'):
-    app = Flask(__name__, static_folder='static', static_url_path='/static')
-    print(f"Flask static_folder: {app.static_folder}")
+    app = Flask(__name__)
+    
+    # Use WhiteNoise to serve static files
+    app.wsgi_app = WhiteNoise(app.wsgi_app, root=os.path.join(app.root_path, 'static'))
+    app.wsgi_app.add_files(os.path.join(app.root_path, 'static'), prefix='/') # Add index.html at root
+
+    print(f"Flask static_folder: {os.path.join(app.root_path, 'static')}") # Debug print
     
     # Load configuration
     app.config.from_object(config[config_name])
@@ -130,15 +136,14 @@ def create_app(config_name='default'):
             return f(*args, **kwargs)
         return decorated_function
     
-    # Catch-all route for React Router (only for non-static, non-api, non-auth)
+    # Catch-all route for React Router (now handled by WhiteNoise)
     @app.route('/')
     def index():
         logger.debug(f"Handling request for path: {request.path}")
-        response = make_response(send_from_directory(app.static_folder, 'index.html'))
-        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-        response.headers['Pragma'] = 'no-cache'
-        response.headers['Expires'] = '0'
-        return response
+        # WhiteNoise will serve index.html directly from the root if it exists
+        # No need for send_from_directory here, return an empty string or basic message
+        # as WhiteNoise will intercept the request for index.html
+        return "" # Or return app.send_static_file('index.html') if you still want flask to handle it explicitly, but WhiteNoise is designed to take over.
     
     # API routes
     @app.route('/api/health')
