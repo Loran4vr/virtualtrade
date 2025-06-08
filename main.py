@@ -50,6 +50,12 @@ def create_app(config_name='default'):
     # Load configuration
     app.config.from_object(config[config_name])
     
+    # Ensure SQLALCHEMY_DATABASE_URI is set
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///site.db')
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    
+    print(f"SQLALCHEMY_DATABASE_URI: {app.config['SQLALCHEMY_DATABASE_URI']}") # Debug print
+
     # Initialize database
     db.init_app(app)
 
