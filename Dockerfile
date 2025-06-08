@@ -27,6 +27,9 @@ RUN pip install --no-cache-dir -r requirements.prod.txt
 # Copy the rest of the application
 COPY . .
 
+# Run database initialization script
+RUN python init_db.py
+
 # Create static directory if it doesn't exist
 RUN mkdir -p /app/static
 
