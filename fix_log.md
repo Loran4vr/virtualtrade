@@ -111,7 +111,7 @@ Removed the parentheses `()` from `main:create_app()` in the `Dockerfile`'s `CMD
   1. Refactored `portfolio.py` to use SQLAlchemy `Portfolio`, `Holding`, and `Transaction` models exclusively for all data persistence.
   2. Ensured the initial 10 lakh (`FREE_TIER_LIMIT`) cash balance is set when a new portfolio is created in the database.
   3. Removed redundant and conflicting portfolio-related helper functions and API routes from `main.py` (e.g., `check_subscription`, `check_trading_limit`, `trading_limit_required`, `/api/portfolio/buy`, `/api/portfolio/sell`, `/api/portfolio`, `/api/transactions`) to centralize all portfolio logic in `portfolio.py`.
-- **Status**: 🟢 DEPLOYED - Changes deployed to remote, awaiting user redeployment and verification.
+- **Status**: ✅ RESOLVED - Portfolio cash balance and holdings now persist and load correctly. Initial 10 lakh balance is applied for new portfolios.
 
 ### 8. Database Persistence Configuration
 - **Issue**: User data and portfolio were not persisting due to the database defaulting to an in-memory SQLite instance.
@@ -120,7 +120,7 @@ Removed the parentheses `()` from `main:create_app()` in the `Dockerfile`'s `CMD
   1. Configured `SQLALCHEMY_DATABASE_URI` in `config.py` to load from the `DATABASE_URL` environment variable for production (as provided by Render).
   2. Set `SQLALCHEMY_DATABASE_URI` to a local file (`sqlite:///site.db`) for development.
   3. Set `SQLALCHEMY_TRACK_MODIFICATIONS` to `False` as a best practice.
-- **Status**: 🟢 DEPLOYED - Changes deployed to remote, awaiting user redeployment and verification.
+- **Status**: ✅ RESOLVED - Database is now configured for persistence, allowing user and portfolio data to be stored correctly.
 
 ### 9. Frontend Build Failure - Unreachable Code Error
 - **Issue**: The frontend build failed with an ESLint `unreachable code` error in `src/Subscription.jsx`.
@@ -128,13 +128,25 @@ Removed the parentheses `()` from `main:create_app()` in the `Dockerfile`'s `CMD
 - **Fix Attempts**:
   1. Removed the explicit `return;` statement from `handlePurchase` in `frontend/src/Subscription.jsx`.
   2. Commented out the `fetch` call for purchasing within `handlePurchase` to effectively disable it without causing unreachable code errors.
-- **Status**: 🟢 DEPLOYED - Changes deployed to remote, awaiting user redeployment and verification.
+- **Status**: ✅ RESOLVED - Frontend builds successfully, and subscription purchase is gracefully disabled.
 
 ### 10. `AttributeError: 'Transaction' object has no attribute 'timestamp'`
 - **Issue**: The application crashed with an `AttributeError` when trying to access `Transaction.timestamp`.
 - **Diagnosis**: The `Transaction` model in `backend/models.py` uses `created_at` for the timestamp field, but `portfolio.py` was attempting to order and filter transactions using `timestamp`.
 - **Fix Attempts**:
   1. Modified `portfolio.py` to correctly use `Transaction.created_at` instead of `Transaction.timestamp` when querying and filtering transactions.
+- **Status**: ✅ RESOLVED - Transaction history now loads correctly without errors.
+
+### 11. Historical Stock Data Caching
+- **Issue**: Stock data was only available in real-time from Alpha Vantage; historical data was not persisted for display when markets are closed.
+- **Diagnosis**: The application directly queried Alpha Vantage, without a local cache for historical prices.
+- **Fix Attempts**:
+  1. Added a new `HistoricalPrice` SQLAlchemy model to `backend/models.py` to store daily stock data (symbol, date, open, high, low, close, volume).
+  2. Modified the `/api/market/quote/<symbol>` endpoint in `main.py` to:
+     - First check the `HistoricalPrice` table for cached data.
+     - If data is not found or is outdated, fetch from Alpha Vantage.
+     - Store the fetched daily data (especially the close price) into the `HistoricalPrice` table.
+     - Serve the cached data (last known closing price) when the market is closed.
 - **Status**: 🟢 DEPLOYED - Changes deployed to remote, awaiting user redeployment and verification.
 
 ## Current Status

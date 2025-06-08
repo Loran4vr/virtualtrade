@@ -5,8 +5,8 @@ from auth import create_auth_blueprint
 from market_data import market_data_bp
 from portfolio import portfolio_bp
 from config import config
-from backend.models import db, User, Portfolio, Transaction, Subscription
-from datetime import datetime, timedelta
+from backend.models import db, User, Portfolio, Transaction, Subscription, HistoricalPrice
+from datetime import datetime, timedelta, time, date
 from decimal import Decimal
 from functools import wraps
 from flask_dance.contrib.google import make_google_blueprint, google
@@ -16,6 +16,7 @@ from sqlalchemy.orm.exc import NoResultFound # Added for oauth_authorized handle
 import logging
 from backend.subscription import init_stripe, SUBSCRIPTION_PLANS
 from whitenoise import WhiteNoise
+import requests
 
 print("##### DEBUG: main.py file has been loaded and executed! #####") # Added top-level print
 
@@ -319,12 +320,57 @@ def create_app():
         if not api_key:
             return jsonify({'error': 'Alpha Vantage API key not configured'}), 500
         
+        today = date.today()
+        market_open_time = time(9, 15)  # 9:15 AM IST
+        market_close_time = time(15, 30) # 3:30 PM IST
+        current_time = datetime.now().time()
+
+        # Check if market is currently open
+        is_market_open = market_open_time <= current_time <= market_close_time
+        
+        # Try to get data from cache first
+        cached_price = HistoricalPrice.query.filter_by(symbol=symbol).order_by(HistoricalPrice.date.desc()).first()
+
+        if cached_price and (cached_price.date == today or not is_market_open):
+            # If data is for today or market is closed, return cached data
+            return jsonify({
+                'symbol': cached_price.symbol,
+                'open': float(cached_price.open) if cached_price.open else None,
+                'high': float(cached_price.high) if cached_price.high else None,
+                'low': float(cached_price.low) if cached_price.low else None,
+                'price': float(cached_price.close) if cached_price.close else None, # Use close as price for cached
+                'volume': int(cached_price.volume) if cached_price.volume else None,
+                'latest_trading_day': cached_price.date.isoformat(),
+                'previous_close': float(cached_price.close) if cached_price.close else None, # For simplicity, using close
+                'change': None, # Cannot calculate change without previous day's close
+                'change_percent': None
+            })
+
+        # If not in cache or outdated (and market is open), fetch from Alpha Vantage
         url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={symbol}&apikey={api_key}"
         response = requests.get(url)
         data = response.json()
         
         if "Global Quote" in data:
             quote = data["Global Quote"]
+            
+            # Save to historical prices
+            try:
+                daily_data = HistoricalPrice(
+                    symbol=quote.get('01. symbol'),
+                    date=datetime.strptime(quote.get('07. latest trading day'), '%Y-%m-%d').date(),
+                    open=Decimal(str(quote.get('02. open'))),
+                    high=Decimal(str(quote.get('03. high'))),
+                    low=Decimal(str(quote.get('04. low'))),
+                    close=Decimal(str(quote.get('05. price'))), # Use current price as close for real-time
+                    volume=int(quote.get('06. volume'))
+                )
+                db.session.add(daily_data)
+                db.session.commit()
+            except Exception as e:
+                logger.error(f"Failed to save historical price for {symbol}: {e}")
+                db.session.rollback()
+
             return jsonify({
                 'symbol': quote.get('01. symbol'),
                 'open': float(quote.get('02. open')),

@@ -97,4 +97,30 @@ class Subscription(db.Model):
             'starts_at': self.starts_at.isoformat(),
             'expires_at': self.expires_at.isoformat(),
             'created_at': self.created_at.isoformat()
+        }
+
+class HistoricalPrice(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    symbol = db.Column(db.String(20), nullable=False, index=True)
+    date = db.Column(db.Date, nullable=False, index=True)
+    open = db.Column(db.Numeric(15, 2))
+    high = db.Column(db.Numeric(15, 2))
+    low = db.Column(db.Numeric(15, 2))
+    close = db.Column(db.Numeric(15, 2))
+    volume = db.Column(db.BigInteger)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (db.UniqueConstraint('symbol', 'date', name='_symbol_date_uc'),)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'symbol': self.symbol,
+            'date': self.date.isoformat(),
+            'open': float(self.open) if self.open else None,
+            'high': float(self.high) if self.high else None,
+            'low': float(self.low) if self.low else None,
+            'close': float(self.close) if self.close else None,
+            'volume': self.volume,
+            'created_at': self.created_at.isoformat()
         } 
