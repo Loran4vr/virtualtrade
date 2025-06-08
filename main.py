@@ -12,6 +12,19 @@ from functools import wraps
 from flask_dance.contrib.google import make_google_blueprint, google
 from flask_dance.consumer import oauth_authorized
 from sqlalchemy.orm.exc import NoResultFound # Added for oauth_authorized handler
+import logging
+import stripe
+from backend.subscription import init_stripe
+
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler()  # This ensures logs go to stdout/stderr
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
@@ -145,11 +158,13 @@ def create_app(config_name='default'):
     # Catch-all route for React Router (only for non-static, non-api, non-auth)
     @app.route('/')
     def index():
+        logger.debug(f"Handling request for path: {request.path}")
         return send_from_directory(app.static_folder, 'index.html')
     
     # API routes
     @app.route('/api/health')
     def health_check():
+        logger.debug("Health check requested")
         return jsonify({'status': 'ok'})
     
     # Subscription endpoints
@@ -410,5 +425,6 @@ if __name__ == '__main__':
     # Use production config if FLASK_ENV is set to production
     config_name = os.getenv('FLASK_ENV', 'development')
     app = create_app(config_name)
+    logger.info("Starting Flask development server...")
     app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
 

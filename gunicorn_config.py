@@ -2,7 +2,7 @@ import multiprocessing
 import os
 
 # Server socket
-bind = f"0.0.0.0:{os.getenv('PORT', '8000')}"
+bind = "0.0.0.0:" + str(os.getenv("PORT", "5000"))
 backlog = 2048
 
 # Worker processes
@@ -13,13 +13,23 @@ timeout = 30
 keepalive = 2
 
 # Logging
-accesslog = '-'
-errorlog = '-'
-loglevel = 'info'
+accesslog = "-"  # Log to stdout
+errorlog = "-"   # Log to stderr
+loglevel = "debug"
+capture_output = True
+enable_stdio_inheritance = True
 
 # Process naming
-proc_name = 'virtualtrade'
+proc_name = 'gunicorn_vta'
 
 # SSL
-# keyfile = 'path/to/keyfile'
-# certfile = 'path/to/certfile' 
+keyfile = None
+certfile = None
+
+# Server mechanics
+daemon = False
+pidfile = None
+umask = 0
+user = None
+group = None
+tmp_upload_dir = None 
