@@ -62,11 +62,15 @@ def create_app(config_name='default'):
     # Handle Google OAuth callback for user creation/login
     @oauth_authorized.connect_via(app) # Connect via the app instance
     def google_logged_in(blueprint, token):
+        logger.debug(f"google_logged_in: Received token: {token is not None}")
         if not token:
+            logger.error("google_logged_in: Token is None, returning False")
             return False
 
         resp = google.get("/oauth2/v2/userinfo")
+        logger.debug(f"google_logged_in: Google user info response status: {resp.ok}")
         if not resp.ok:
+            logger.error(f"google_logged_in: Failed to get user info: {resp.status_code} - {resp.text}")
             return False
 
         google_info = resp.json()
@@ -86,6 +90,8 @@ def create_app(config_name='default'):
 
         # Create session
         session['user_id'] = user.id
+        session.permanent = True # Ensure the session is permanent
+        logger.debug(f"google_logged_in: User {user.email} successfully logged in, user_id: {user.id}")
         return None # Return None to indicate successful authorization to Flask-Dance
     
     # Register blueprints
