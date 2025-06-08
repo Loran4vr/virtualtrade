@@ -1,7 +1,7 @@
 from flask import Flask, render_template, jsonify, session, redirect, url_for, request, make_response, send_from_directory
 import os
 from dotenv import load_dotenv
-from auth import auth_bp, init_google_oauth
+from auth import create_auth_blueprint
 from market_data import market_data_bp
 from portfolio import portfolio_bp
 from config import config
@@ -154,7 +154,7 @@ def create_app():
         return jsonify({'session': dict(session)})
 
     # Register blueprints
-    app.register_blueprint(auth_bp, url_prefix='/auth') # auth_bp now contains only /login, /logout, /user
+    app.register_blueprint(create_auth_blueprint(), url_prefix='/auth') # Now calls the blueprint factory
     app.register_blueprint(market_data_bp, url_prefix='/api/market')
     app.register_blueprint(portfolio_bp, url_prefix='/api/portfolio')
 
