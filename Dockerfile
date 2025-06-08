@@ -34,6 +34,7 @@ COPY --from=frontend-builder /app/frontend/build/ /app/static/
 
 # Verify static files exist
 RUN ls -la /app/static
+RUN ls -la /app/static/js
 
 # Set environment variables
 ENV FLASK_APP=main.py
