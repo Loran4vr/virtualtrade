@@ -53,6 +53,14 @@ export default function Subscription() {
   };
 
   const handlePurchase = async (planId) => {
+    // Temporarily disable purchase functionality until payment integration is ready
+    toast({
+      title: 'Info',
+      description: 'Subscription purchase is currently unavailable.',
+      variant: 'info',
+    });
+    return;
+
     setPurchasing(true);
     try {
       const response = await fetch('/api/subscription/purchase', {

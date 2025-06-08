@@ -97,6 +97,22 @@ Removed the parentheses `()` from `main:create_app()` in the `Dockerfile`'s `CMD
   4. Removed `session.get_cookie_value()` call, which was causing `AttributeError`.
 - **Status**: 🟢 DEPLOYED - Changes deployed to remote, awaiting user redeployment and verification.
 
+### 6. Subscription Page Not Visible
+- **Issue**: The Subscription page and its navigation link were not visible in the frontend.
+- **Fix Attempts**:
+  1. Added a new route for the `Subscription` component in `frontend/src/App.jsx`.
+  2. Added a navigation link for the `Subscription` page in `frontend/src/Layout.jsx`.
+- **Status**: 🟢 DEPLOYED - Changes deployed, awaiting user verification after redeployment.
+
+### 7. Portfolio Data Not Persisting / Initial Balance Missing
+- **Issue**: Portfolio data (cash balance, holdings, transactions) was not persisting across deployments, and the initial 10 lakh balance was not being granted to new users.
+- **Diagnosis**: The backend was using a mix of in-memory dictionaries (`portfolios`, `transactions` in `portfolio.py`) and SQLAlchemy models for portfolio management, leading to data loss on application restarts.
+- **Fix Attempts**:
+  1. Refactored `portfolio.py` to use SQLAlchemy `Portfolio`, `Holding`, and `Transaction` models exclusively for all data persistence.
+  2. Ensured the initial 10 lakh (`FREE_TIER_LIMIT`) cash balance is set when a new portfolio is created in the database.
+  3. Removed redundant and conflicting portfolio-related helper functions and API routes from `main.py` (e.g., `check_subscription`, `check_trading_limit`, `trading_limit_required`, `/api/portfolio/buy`, `/api/portfolio/sell`, `/api/portfolio`, `/api/transactions`) to centralize all portfolio logic in `portfolio.py`.
+- **Status**: 🟢 DEPLOYED - Changes deployed to remote, awaiting user redeployment and verification.
+
 ## Current Status
 - OAuth flow successfully obtains token from Google
 - Session configuration is properly set

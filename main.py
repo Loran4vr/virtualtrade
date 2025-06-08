@@ -198,44 +198,45 @@ def create_app():
     # with app.app_context():
     #     db.create_all()
 
+    # Removed duplicate portfolio related functions and routes. These are now handled by portfolio.py
     # Helper function to check subscription status
-    def check_subscription(user_id):
-        subscription = Subscription.query.filter_by(user_id=user_id).first()
-        if not subscription:
-            return False, FREE_TIER_LIMIT
+    # def check_subscription(user_id):
+    #     subscription = Subscription.query.filter_by(user_id=user_id).first()
+    #     if not subscription:
+    #         return False, FREE_TIER_LIMIT
         
-        if subscription.expires_at < datetime.utcnow():
-            return False, FREE_TIER_LIMIT
+    #     if subscription.expires_at < datetime.utcnow():
+    #         return False, FREE_TIER_LIMIT
         
-        return True, subscription.credit_limit
+    #     return True, subscription.credit_limit
 
     # Helper function to check trading limits
-    def check_trading_limit(user_id, amount):
-        has_subscription, limit = check_subscription(user_id)
-        portfolio = Portfolio.query.filter_by(user_id=user_id).first()
+    # def check_trading_limit(user_id, amount):
+    #     has_subscription, limit = check_subscription(user_id)
+    #     portfolio = Portfolio.query.filter_by(user_id=user_id).first()
         
-        if not portfolio:
-            return False, "Portfolio not found"
+    #     if not portfolio:
+    #         return False, "Portfolio not found"
         
-        total_value = portfolio.cash_balance
-        # Loop through holdings if they exist
-        if portfolio.holdings: 
-            for holding in portfolio.holdings:
-                total_value += holding.quantity * holding.avg_price
+    #     total_value = portfolio.cash_balance
+    #     # Loop through holdings if they exist
+    #     if portfolio.holdings: 
+    #         for holding in portfolio.holdings:
+    #             total_value += holding.quantity * holding.avg_price
         
-        if total_value + amount > limit:
-            return False, f"Trading limit exceeded. Current limit: ₹{limit:,}"
+    #     if total_value + amount > limit:
+    #         return False, f"Trading limit exceeded. Current limit: ₹{limit:,}"
         
-        return True, None
+    #     return True, None
 
     # Decorator to check trading limits
-    def trading_limit_required(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if not session.get('user_id'):
-                return jsonify({'error': 'Not authenticated'}), 401
-            return f(*args, **kwargs)
-        return decorated_function
+    # def trading_limit_required(f):
+    #     @wraps(f)
+    #     def decorated_function(*args, **kwargs):
+    #         if not session.get('user_id'):
+    #             return jsonify({'error': 'Not authenticated'}), 401
+    #         return f(*args, **kwargs)
+    #     return decorated_function
     
     # Catch-all route for React Router (now handled by WhiteNoise)
     @app.route('/')
@@ -265,13 +266,15 @@ def create_app():
         if not session.get('user_id'):
             return jsonify({'error': 'Not authenticated'}), 401
         
-        has_subscription, limit = check_subscription(session['user_id'])
-        subscription = Subscription.query.filter_by(user_id=session['user_id']).first()
+        # Removed duplicate portfolio related functions and routes. These are now handled by portfolio.py
+        # Helper function to check subscription status
+        # has_subscription, limit = check_subscription(session['user_id'])
+        # subscription = Subscription.query.filter_by(user_id=session['user_id']).first()
         
         return jsonify({
-            'has_subscription': has_subscription,
-            'trading_limit': float(limit),
-            'subscription': subscription.to_dict() if subscription else None
+            'has_subscription': True,
+            'trading_limit': float(FREE_TIER_LIMIT),
+            'subscription': None
         })
 
     @app.route('/api/subscription/purchase', methods=['POST'])
@@ -367,132 +370,131 @@ def create_app():
             return jsonify(results)
         return jsonify([]), 200 # Return empty array if no matches
     
-    # Portfolio endpoints
-    @app.route('/api/portfolio/buy', methods=['POST'])
-    @trading_limit_required
-    def buy_stock():
-        if not session.get('user_id'):
-            return jsonify({'error': 'Not authenticated'}), 401
+    # Portfolio endpoints (MOVED TO PORTFOLIO.PY)
+    # @app.route('/api/portfolio/buy', methods=['POST'])
+    # @trading_limit_required
+    # def buy_stock():
+    #     if not session.get('user_id'):
+    #         return jsonify({'error': 'Not authenticated'}), 401
         
-        data = request.json
-        symbol = data.get('symbol')
-        quantity = int(data.get('quantity', 0))
-        price = Decimal(str(data.get('price', 0)))
+    #     data = request.json
+    #     symbol = data.get('symbol')
+    #     quantity = int(data.get('quantity', 0))
+    #     price = Decimal(str(data.get('price', 0)))
         
-        # Check trading limit
-        can_trade, error = check_trading_limit(session['user_id'], quantity * price)
-        if not can_trade:
-            return jsonify({'error': error}), 400
+    #     # Check trading limit
+    #     can_trade, error = check_trading_limit(session['user_id'], quantity * price)
+    #     if not can_trade:
+    #         return jsonify({'error': error}), 400
         
-        portfolio = Portfolio.query.filter_by(user_id=session['user_id']).first()
-        if not portfolio:
-            # Create portfolio if it doesn't exist
-            portfolio = Portfolio(user_id=session['user_id'], cash_balance=FREE_TIER_LIMIT)
-            db.session.add(portfolio)
-            db.session.commit() # Commit to get portfolio.id
+    #     portfolio = Portfolio.query.filter_by(user_id=session['user_id']).first()
+    #     if not portfolio:
+    #         # Create portfolio if it doesn't exist
+    #         portfolio = Portfolio(user_id=session['user_id'], cash_balance=FREE_TIER_LIMIT)
+    #         db.session.add(portfolio)
+    #         db.session.commit() # Commit to get portfolio.id
             
-        if portfolio.cash_balance < quantity * price:
-            return jsonify({'error': 'Insufficient cash balance'}), 400
+    #     if portfolio.cash_balance < quantity * price:
+    #         return jsonify({'error': 'Insufficient cash balance'}), 400
         
-        holding = Holding.query.filter_by(portfolio_id=portfolio.id, symbol=symbol).first()
-        if holding:
-            new_quantity = holding.quantity + quantity
-            new_avg_price = ((holding.quantity * holding.avg_price) + (quantity * price)) / new_quantity
-            holding.quantity = new_quantity
-            holding.avg_price = new_avg_price
-        else:
-            holding = Holding(portfolio_id=portfolio.id, symbol=symbol, quantity=quantity, avg_price=price)
-            db.session.add(holding)
+    #     holding = Holding.query.filter_by(portfolio_id=portfolio.id, symbol=symbol).first()
+    #     if holding:
+    #         new_quantity = holding.quantity + quantity
+    #         new_avg_price = ((holding.quantity * holding.avg_price) + (quantity * price)) / new_quantity
+    #         holding.quantity = new_quantity
+    #         holding.avg_price = new_avg_price
+    #     else:
+    #         holding = Holding(portfolio_id=portfolio.id, symbol=symbol, quantity=quantity, avg_price=price)
+    #         db.session.add(holding)
             
-        portfolio.cash_balance -= (quantity * price)
+    #     portfolio.cash_balance -= (quantity * price)
         
-        transaction = Transaction(
-            user_id=session['user_id'],
-            symbol=symbol,
-            quantity=quantity,
-            price=price,
-            type='buy'
-        )
-        db.session.add(transaction)
-        db.session.commit()
+    #     transaction = Transaction(
+    #         user_id=session['user_id'],
+    #         symbol=symbol,
+    #         quantity=quantity,
+    #         price=price,
+    #         type='buy'
+    #     )
+    #     db.session.add(transaction)
+    #     db.session.commit()
         
-        return jsonify({
-            'message': 'Stock purchased successfully',
-            'portfolio': portfolio.to_dict(),
-            'transaction': transaction.to_dict()
-        })
+    #     return jsonify({
+    #         'message': 'Stock purchased successfully',
+    #         'portfolio': portfolio.to_dict(),
+    #         'transaction': transaction.to_dict()
+    #     })
 
-    @app.route('/api/portfolio/sell', methods=['POST'])
-    @trading_limit_required
-    def sell_stock():
-        if not session.get('user_id'):
-            return jsonify({'error': 'Not authenticated'}), 401
+    # @app.route('/api/portfolio/sell', methods=['POST'])
+    # @trading_limit_required
+    # def sell_stock():
+    #     if not session.get('user_id'):
+    #         return jsonify({'error': 'Not authenticated'}), 401
         
-        data = request.json
-        symbol = data.get('symbol')
-        quantity_to_sell = int(data.get('quantity', 0))
-        price = Decimal(str(data.get('price', 0)))
+    #     data = request.json
+    #     symbol = data.get('symbol')
+    #     quantity_to_sell = int(data.get('quantity', 0))
+    #     price = Decimal(str(data.get('price', 0)))
         
-        # Check trading limit (selling adds to cash, so limit check is different)
-        # This check might need to be adjusted based on how selling affects total value for limit purposes
+    #     # Check trading limit (selling adds to cash, so limit check is different)
+    #     # This check might need to be adjusted based on how selling affects total value for limit purposes
         
-        portfolio = Portfolio.query.filter_by(user_id=session['user_id']).first()
-        if not portfolio:
-            return jsonify({'error': 'Portfolio not found'}), 404
+    #     portfolio = Portfolio.query.filter_by(user_id=session['user_id']).first()
+    #     if not portfolio:
+    #         return jsonify({'error': 'Portfolio not found'}), 404
         
-        holding = Holding.query.filter_by(portfolio_id=portfolio.id, symbol=symbol).first()
-        if not holding or holding.quantity < quantity_to_sell:
-            return jsonify({'error': 'Insufficient shares to sell'}), 400
+    #     holding = Holding.query.filter_by(portfolio_id=portfolio.id, symbol=symbol).first()
+    #     if not holding or holding.quantity < quantity_to_sell:
+    #         return jsonify({'error': 'Insufficient shares to sell'}), 400
             
-        holding.quantity -= quantity_to_sell
-        portfolio.cash_balance += (quantity_to_sell * price)
+    #     holding.quantity -= quantity_to_sell
+    #     portfolio.cash_balance += (quantity_to_sell * price)
         
-        if holding.quantity == 0:
-            db.session.delete(holding)
+    #     if holding.quantity == 0:
+    #         db.session.delete(holding)
             
-        transaction = Transaction(
-            user_id=session['user_id'],
-            symbol=symbol,
-            quantity=quantity_to_sell,
-            price=price,
-            type='sell'
-        )
-        db.session.add(transaction)
-        db.session.commit()
+    #     transaction = Transaction(
+    #         user_id=session['user_id'],
+    #         symbol=symbol,
+    #         quantity=quantity_to_sell,
+    #         price=price,
+    #         type='sell'
+    #     )
+    #     db.session.add(transaction)
+    #     db.session.commit()
         
-        return jsonify({
-            'message': 'Stock sold successfully',
-            'portfolio': portfolio.to_dict(),
-            'transaction': transaction.to_dict()
-        })
+    #     return jsonify({
+    #         'message': 'Stock sold successfully',
+    #         'portfolio': portfolio.to_dict(),
+    #         'transaction': transaction.to_dict()
+    #     })
 
-    @app.route('/api/portfolio', methods=['GET'])
-    def get_portfolio():
-        if not session.get('user_id'):
-            return jsonify({'error': 'Not authenticated'}), 401
+    # @app.route('/api/portfolio', methods=['GET'])
+    # def get_portfolio():
+    #     if not session.get('user_id'):
+    #         return jsonify({'error': 'Not authenticated'}), 401
         
-        portfolio = Portfolio.query.filter_by(user_id=session['user_id']).first()
-        if not portfolio:
-            # If no portfolio, return a default empty one with free tier limit
-            return jsonify({
-                'id': None,
-                'user_id': session['user_id'],
-                'cash_balance': float(FREE_TIER_LIMIT),
-                'created_at': datetime.utcnow().isoformat(),
-                'holdings': []
-            })
-            
-        return jsonify(portfolio.to_dict())
+    #     portfolio = Portfolio.query.filter_by(user_id=session['user_id']).first()
+    #     if not portfolio:
+    #         # If no portfolio, return a default empty one with free tier limit
+    #         return jsonify({
+    #             'id': None,
+    #             'user_id': session['user_id'],
+    #             'cash_balance': FREE_TIER_LIMIT,
+    #             'holdings': [],
+    #             'created_at': datetime.utcnow().isoformat(),
+    #             'last_updated': datetime.utcnow().isoformat()
+    #         })
+    #     return jsonify(portfolio.to_dict())
 
-    @app.route('/api/transactions', methods=['GET'])
-    def get_transactions():
-        if not session.get('user_id'):
-            return jsonify({'error': 'Not authenticated'}), 401
+    # @app.route('/api/transactions', methods=['GET'])
+    # def get_transactions():
+    #     if not session.get('user_id'):
+    #         return jsonify({'error': 'Not authenticated'}), 401
         
-        transactions = Transaction.query.filter_by(user_id=session['user_id']).order_by(Transaction.created_at.desc()).all()
-        return jsonify([t.to_dict() for t in transactions])
+    #     transactions = Transaction.query.filter_by(user_id=session['user_id']).order_by(Transaction.timestamp.desc()).all()
+    #     return jsonify([t.to_dict() for t in transactions])
 
-    # Error handlers
     @app.errorhandler(404)
     def not_found(e):
         # If it's a request for a static file that wasn't found, return a true 404
