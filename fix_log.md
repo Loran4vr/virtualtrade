@@ -54,3 +54,72 @@ After explicitly setting `FLASK_ENV` within the `CMD` as `FLASK_ENV=production e
 
 **Resolution:**
 Removed the parentheses `()` from `main:create_app()` in the `Dockerfile`'s `CMD` instruction. Gunicorn expects `main:create_app` (module:callable) to import the callable and execute it, not literal shell execution of `create_app()`. 
+
+---
+
+## OAuth and Session Issues
+
+### 1. Redirect URI Mismatch
+- **Issue**: `redirect_uri_mismatch` error with URL `https://virtualtrade.onrender.com/auth/google/google/authorized`
+- **Fix Attempts**:
+  1. Changed `url_prefix` in `main.py` from `/auth/google` to `/auth`
+  2. Added explicit `redirect_url` in `make_google_blueprint`
+- **Status**: ✅ RESOLVED - Redirect URI now correctly set to `https://virtualtrade.onrender.com/auth/google/authorized`
+
+### 2. Session Persistence
+- **Issue**: Session not persisting after OAuth login, causing "state not found" error
+- **Fix Attempts**:
+  1. Added explicit session configuration in `create_app()`:
+     ```python
+     app.config['SESSION_COOKIE_SECURE'] = True
+     app.config['SESSION_COOKIE_HTTPONLY'] = True
+     app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+     app.config['SESSION_COOKIE_DOMAIN'] = None
+     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
+     ```
+  2. Modified `google_logged_in` handler:
+     - Clear existing session data
+     - Mark session as modified
+     - Create response with explicit cookie settings
+     - Set session cookie with proper security settings
+- **Status**: 🔄 TESTING - Changes deployed, awaiting verification
+
+### 3. Environment Configuration
+- **Issue**: Production configuration not being loaded correctly
+- **Fix Attempts**:
+  1. Modified `create_app()` to determine config based on environment variable
+  2. Added debug logging for environment variables and configuration
+- **Status**: ✅ RESOLVED - Logs confirm `FLASK_ENV=production` and correct cookie settings
+
+### 4. Blueprint Registration
+- **Issue**: Multiple blueprint registration causing conflicts
+- **Fix Attempts**:
+  1. Refactored `auth.py` into blueprint factory
+  2. Corrected blueprint registration in `main.py`
+- **Status**: ✅ RESOLVED - Blueprints now correctly registered
+
+## Current Status
+- OAuth flow successfully obtains token from Google
+- Session configuration is properly set
+- Cookie settings are correct for cross-site requests
+- Debug logging is in place to track session state
+
+## Next Steps
+1. Monitor session persistence after OAuth login
+2. Verify user authentication state is maintained
+3. Test cross-site cookie handling
+4. Monitor for any new session-related issues
+
+## Debug Logging Points
+1. Session creation in `google_logged_in`
+2. Cookie settings in `create_app`
+3. Environment variables at startup
+4. OAuth state management
+5. User authentication status
+
+## Important Notes
+- All cookie settings must be consistent across the application
+- Session must be marked as modified when changed
+- Cross-site requests require `SameSite=None`
+- Secure cookies require HTTPS
+- Session lifetime is set to 7 days 
