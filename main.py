@@ -78,7 +78,9 @@ def create_app(config_name='default'):
 
         # Find or create user
         user = User.query.filter_by(google_id=google_user_id).first()
-        if not user:
+        if user:
+            logger.debug(f"google_logged_in: Found existing user: {user.email} (ID: {user.id})")
+        else:
             user = User(
                 google_id=google_user_id,
                 email=google_info['email'],
@@ -87,10 +89,12 @@ def create_app(config_name='default'):
             )
             db.session.add(user)
             db.session.commit()
+            logger.debug(f"google_logged_in: Created new user: {user.email} (ID: {user.id})")
 
         # Create session
         session['user_id'] = user.id
-        session.permanent = True # Ensure the session is permanent
+        session.permanent = True
+        logger.debug(f"google_logged_in: Session user_id set to {session.get('user_id')}. Session permanent: {session.permanent}")
         logger.debug(f"google_logged_in: User {user.email} successfully logged in, user_id: {user.id}")
         return None # Return None to indicate successful authorization to Flask-Dance
     
