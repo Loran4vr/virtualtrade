@@ -53,4 +53,4 @@ ENV PYTHONPATH=/app:$PYTHONPATH
 EXPOSE 5000
 
 # Run the application with Gunicorn, explicitly setting FLASK_ENV in the shell context
-CMD ["/bin/sh", "-c", "FLASK_ENV=production exec gunicorn --bind 0.0.0.0:5000 --workers 2 --threads 2 --timeout 120 --keep-alive 5 --max-requests 1000 --max-requests-jitter 50 main:create_app()"] 
+CMD ["/bin/sh", "-c", "FLASK_ENV=production exec gunicorn --bind 0.0.0.0:5000 --workers 2 --threads 2 --timeout 120 --keep-alive 5 --max-requests 1000 --max-requests-jitter 50 main:create_app"] 
