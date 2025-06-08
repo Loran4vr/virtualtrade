@@ -67,6 +67,10 @@ def create_app(config_name='default'):
     app.register_blueprint(market_data_bp, url_prefix='/api/market')
     app.register_blueprint(portfolio_bp, url_prefix='/api/portfolio')
 
+    # Create database tables if they don't exist
+    with app.app_context():
+        db.create_all()
+
     # Helper function to check subscription status
     def check_subscription(user_id):
         subscription = Subscription.query.filter_by(user_id=user_id).first()
