@@ -110,7 +110,7 @@ def create_app(config_name='default'):
     @app.route('/', defaults={'path': ''})
     @app.route('/<path:path>')
     def index(path):
-        if path.startswith('api/') or path.startswith('auth/'):
+        if path.startswith('api/') or path.startswith('auth/') or path.startswith('static/'):
             return 'Not Found', 404
         return send_from_directory(app.static_folder, 'index.html')
     
