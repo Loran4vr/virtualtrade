@@ -459,9 +459,12 @@ def create_app():
     return app
 
 if __name__ == '__main__':
-    # Use production config if FLASK_ENV is set to production
     # The config_name is now determined inside create_app()
     app = create_app() # Call without argument
     logger.info("Starting Flask development server...")
     app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
+
+# Gunicorn will import 'application' and use it directly.
+# This ensures create_app() is called once to get the app instance.
+application = create_app()
 
