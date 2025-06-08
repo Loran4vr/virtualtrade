@@ -64,7 +64,7 @@ Removed the parentheses `()` from `main:create_app()` in the `Dockerfile`'s `CMD
 - **Fix Attempts**:
   1. Changed `url_prefix` in `main.py` from `/auth/google` to `/auth`
   2. Added explicit `redirect_url` in `make_google_blueprint`
-- **Status**: ✅ RESOLVED - Redirect URI now correctly set to `https://virtualtrade.onrender.com/auth/google/authorized`
+- **Status**: 🟢 DEPLOYED - Changes deployed to remote, awaiting user redeployment and verification.
 
 ### 2. Session Persistence
 - **Issue**: Session not persisting after OAuth login, causing "state not found" error
@@ -86,17 +86,16 @@ Removed the parentheses `()` from `main:create_app()` in the `Dockerfile`'s `CMD
      - Using Flask-Dance's `SessionStorage` explicitly
      - Storing OAuth state in session
      - Connecting OAuth handler to blueprint instead of app
-- **Status**: 🔄 TESTING - Latest changes deployed, awaiting verification
+- **Status**: 🟢 DEPLOYED - Changes deployed to remote, awaiting user redeployment and verification.
 
 ### 5. OAuth State Management
 - **Issue**: OAuth state not being preserved between requests
 - **Fix Attempts**:
-  1. Added explicit state storage in session
-  2. Using Flask-Dance's built-in session storage
-     - Corrected import from `flask_dance.consumer.storage.session import SessionStorage`
-     - Using `SessionStorage()` for OAuth state management
-  3. Connecting OAuth handler to blueprint instance
-- **Status**: 🔄 TESTING - Latest changes deployed, awaiting verification
+  1. Added explicit state storage in session.
+  2. Used Flask-Dance's built-in session storage with the corrected import from `flask_dance.consumer.storage.session import SessionStorage`.
+  3. Connected the OAuth handler to the blueprint instance.
+  4. Removed `session.get_cookie_value()` call, which was causing `AttributeError`.
+- **Status**: 🟢 DEPLOYED - Changes deployed to remote, awaiting user redeployment and verification.
 
 ## Current Status
 - OAuth flow successfully obtains token from Google
@@ -129,3 +128,11 @@ Removed the parentheses `()` from `main:create_app()` in the `Dockerfile`'s `CMD
 - Session lifetime is set to 7 days
 - OAuth state must be preserved in session
 - Flask-Dance session storage is explicitly configured with correct import 
+
+### Current Status Summary:
+- OAuth flow successfully obtains token from Google
+- Session configuration is properly set
+- Cookie settings are correct for cross-site requests
+- Debug logging is in place to track session state
+- Explicit state handling added to session
+- Using Flask-Dance's session storage with correct import 

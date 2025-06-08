@@ -160,24 +160,28 @@ def create_app():
         
         # Store OAuth state in session
         session['oauth_state'] = request.args.get('state')
-        logger.debug(f"google_logged_in: Stored OAuth state in session: {session.get('oauth_state')}")
+        logger.debug(f"DEBUG:main:google_logged_in: Stored OAuth state in session: {session.get('oauth_state')}")
+        print(f"DEBUG:main:google_logged_in: Session user_id set to: {session.get('user_id')}")
+        print(f"DEBUG:main:google_logged_in: Session is permanent: {session.permanent}")
+        print(f"DEBUG:main:google_logged_in: Session type: {type(session)}")
+
+        # No direct access to cookie value from session object.
+        # cookie_value = session.get_cookie_value()
+        # if cookie_value:
+        #     print(f"DEBUG:main:google_logged_in: Session cookie value: {cookie_value[:20]}...")
+        # else:
+        #     print("DEBUG:main:google_logged_in: No session cookie value found.")
+
+        # Ensure the session is saved before redirecting
+        session.modified = True
+
+        # Redirect to the main page or dashboard after successful login
+        resp = make_response(redirect('/'))
         
-        # Create response with explicit cookie settings
-        response = make_response(redirect('/'))
-        response.set_cookie(
-            'session',
-            session.get_cookie_value(),
-            secure=True,
-            httponly=True,
-            samesite='None',
-            max_age=timedelta(days=7)
-        )
-        
-        logger.debug(f"google_logged_in: Session user_id set to {session.get('user_id')}. Session permanent: {session.permanent}")
         logger.debug(f"google_logged_in: User {user.email} successfully logged in, user_id: {user.id}")
         logger.debug(f"google_logged_in: Full session after setting user_id: {dict(session)}")
 
-        return response
+        return resp
     
     # Test session route
     @app.route('/test-session')
