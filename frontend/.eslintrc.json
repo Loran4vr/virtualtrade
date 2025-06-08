@@ -22,11 +22,15 @@
     "react/react-in-jsx-scope": "off",
     "react/prop-types": "off",
     "no-unused-vars": "warn",
-    "no-empty": "warn"
+    "no-empty": "warn",
+    "no-undef": "off"
   },
   "settings": {
     "react": {
       "version": "detect"
     }
+  },
+  "globals": {
+    "React": "readonly"
   }
 } 
