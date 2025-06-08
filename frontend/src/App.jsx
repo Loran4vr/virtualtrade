@@ -1,82 +1,93 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from './components/ui/theme-provider';
+import './App.css';
+
+// Pages
+import Login from './Login';
+import Dashboard from './Dashboard';
+import Market from './Market';
+import Portfolio from './Portfolio';
+import Transactions from './Transactions';
+
+// Components
+import Layout from './Layout';
 import { Toaster } from './components/ui/toaster';
-import { useToast } from './components/ui/use-toast';
-import { Button } from './components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from './components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './components/ui/dropdown-menu';
-import { LogIn, LogOut, User } from 'lucide-react';
-import Subscription from './Subscription';
+
+// Context
+import { AuthProvider } from './AuthContext';
 
 function App() {
-  const { toast } = useToast();
-
-  const handleLogin = () => {
-    window.location.href = '/login';
-  };
-
-  const handleLogout = () => {
-    // Clear any stored tokens or user data
-    localStorage.removeItem('token');
-    // Redirect to home page
-    window.location.href = '/';
-    toast({
-      title: "Logged out",
-      description: "You have been successfully logged out.",
-    });
-  };
-
   return (
-    <Router>
-      <div className="min-h-screen bg-background">
-        <header className="border-b">
-          <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 className="text-2xl font-bold">VTA App</h1>
-            <nav className="flex items-center gap-4">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src="/avatars/01.png" alt="@user" />
-                      <AvatarFallback>U</AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">User</p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        user@example.com
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogin}>
-                    <LogIn className="mr-2 h-4 w-4" />
-                    <span>Login</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Logout</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </nav>
-          </div>
-        </header>
-
-        <main className="container mx-auto px-4 py-8">
+    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+      <AuthProvider>
+        <Router>
           <Routes>
-            <Route path="/" element={<div>Home Page</div>} />
-            <Route path="/login" element={<div>Login Page</div>} />
-            <Route path="/subscription" element={<Subscription />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={
+              <ProtectedRoute>
+                <Layout>
+                  <Dashboard />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/market" element={
+              <ProtectedRoute>
+                <Layout>
+                  <Market />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/portfolio" element={
+              <ProtectedRoute>
+                <Layout>
+                  <Portfolio />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/transactions" element={
+              <ProtectedRoute>
+                <Layout>
+                  <Transactions />
+                </Layout>
+              </ProtectedRoute>
+            } />
           </Routes>
-        </main>
-      </div>
-      <Toaster />
-    </Router>
+        </Router>
+        <Toaster />
+      </AuthProvider>
+    </ThemeProvider>
   );
+}
+
+// Protected route component
+function ProtectedRoute({ children }) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    // Check if user is authenticated
+    async function checkAuth() {
+      try {
+        const response = await fetch('/auth/user');
+        const data = await response.json();
+        setIsAuthenticated(data.authenticated);
+      } catch (error) {
+        console.error('Authentication check failed:', error);
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    checkAuth();
+  }, []);
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+
+  return isAuthenticated ? children : <Navigate to="/login" />;
 }
 
 export default App; 
