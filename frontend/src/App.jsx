@@ -21,12 +21,12 @@ import { AuthProvider, useAuth } from './AuthContext';
 function App() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-      <AuthProvider>
-        <Router>
+      <Router>
+        <AuthProvider>
           <AppRoutes />
-        </Router>
-        <Toaster />
-      </AuthProvider>
+          <Toaster />
+        </AuthProvider>
+      </Router>
     </ThemeProvider>
   );
 }
