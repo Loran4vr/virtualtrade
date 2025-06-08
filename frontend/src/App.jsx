@@ -20,8 +20,8 @@ import { AuthProvider } from './AuthContext';
 function App() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-      <AuthProvider>
-        <Router>
+      <Router>
+        <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/" element={
@@ -53,9 +53,9 @@ function App() {
               </ProtectedRoute>
             } />
           </Routes>
-        </Router>
+        </AuthProvider>
         <Toaster />
-      </AuthProvider>
+      </Router>
     </ThemeProvider>
   );
 }
@@ -90,4 +90,4 @@ function ProtectedRoute({ children }) {
   return isAuthenticated ? children : <Navigate to="/login" />;
 }
 
-export default App; 
+export default App;
