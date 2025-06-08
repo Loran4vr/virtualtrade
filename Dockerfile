@@ -31,6 +31,9 @@ COPY . .
 # Verify backend directory contents
 RUN ls -la /app/backend
 
+# Set FLASK_ENV for the init_db.py run step
+ENV FLASK_ENV=production
+
 # Run database initialization script
 RUN python init_db.py
 
