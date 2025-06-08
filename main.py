@@ -89,10 +89,25 @@ def create_app():
         client_id=app.config.get('GOOGLE_CLIENT_ID'),
         client_secret=app.config.get('GOOGLE_CLIENT_SECRET'),
         scope=["profile", "email"],
+        redirect_url="https://virtualtrade.onrender.com/auth/google/authorized", # Explicitly set the redirect_url
         redirect_to="index" # Redirect to the root endpoint 'index' after successful OAuth
     )
-    app.register_blueprint(google_bp, url_prefix='/auth/google') # Register google_bp with app directly
+    app.register_blueprint(google_bp, url_prefix='/auth') # Register google_bp with app directly, url_prefix corrected to '/auth'
     logger.debug("Google OAuth blueprint registered directly with app")
+
+    # NEW DEBUG: Check Flask's perception of Google OAuth URLs
+    with app.test_request_context():
+        try:
+            login_url = url_for("google.login", _external=True)
+            logger.debug(f"DEBUG: Calculated google.login URL: {login_url}")
+        except Exception as e:
+            logger.debug(f"DEBUG: Error calculating google.login URL: {e}")
+
+        try:
+            authorized_url = url_for("google.authorized", _external=True)
+            logger.debug(f"DEBUG: Calculated google.authorized URL: {authorized_url}")
+        except Exception as e:
+            logger.debug(f"DEBUG: Error calculating google.authorized URL: {e}")
 
     # Initialize Stripe (moved from module level)
     init_stripe(app)
