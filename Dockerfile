@@ -46,12 +46,11 @@ RUN ls -la /app/static
 
 # Set environment variables
 ENV FLASK_APP=main.py
-ENV FLASK_ENV=production
 ENV PORT=5000
 ENV PYTHONPATH=/app:$PYTHONPATH
 
 # Expose the port
 EXPOSE 5000
 
-# Run the application with Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "2", "--timeout", "120", "--keep-alive", "5", "--max-requests", "1000", "--max-requests-jitter", "50", "main:create_app()"] 
+# Run the application with Gunicorn, explicitly setting FLASK_ENV
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "2", "--timeout", "120", "--keep-alive", "5", "--max-requests", "1000", "--max-requests-jitter", "50", "main:create_app()", "--env", "FLASK_ENV=production"] 
