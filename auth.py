@@ -51,6 +51,7 @@ def logout():
 def get_user():
     """Get the current user info"""
     logger.debug("User info route accessed")
+    print(f"DEBUG: get_user: Full session: {dict(session)}")
     if 'user_id' not in session:
         logger.debug(f"get_user: session['user_id'] is {session.get('user_id')}. No user_id in session.")
         return jsonify({'authenticated': False}), 401
