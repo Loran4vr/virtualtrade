@@ -19,6 +19,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import HistoryIcon from '@mui/icons-material/History';
+import DiamondIcon from '@mui/icons-material/Diamond';
 import LogoutIcon from '@mui/icons-material/Logout';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
@@ -33,6 +34,7 @@ const navigation = [
   { name: 'Market', href: '/market', icon: <ShowChartIcon /> },
   { name: 'Portfolio', href: '/portfolio', icon: <AccountBalanceWalletIcon /> },
   { name: 'Transactions', href: '/transactions', icon: <HistoryIcon /> },
+  { name: 'Subscription', href: '/subscription', icon: <DiamondIcon /> },
 ];
 
 export default function Layout({ children }) {

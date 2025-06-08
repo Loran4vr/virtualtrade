@@ -9,6 +9,7 @@ import Dashboard from './Dashboard';
 import Market from './Market';
 import Portfolio from './Portfolio';
 import Transactions from './Transactions';
+import Subscription from './Subscription';
 
 // Components
 import Layout from './Layout';
@@ -49,6 +50,13 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <Transactions />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/subscription" element={
+              <ProtectedRoute>
+                <Layout>
+                  <Subscription />
                 </Layout>
               </ProtectedRoute>
             } />
