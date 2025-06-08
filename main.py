@@ -170,7 +170,7 @@ def create_app(config_name='default'):
     # Subscription endpoints
     @app.route('/api/subscription/plans')
     def get_subscription_plans():
-        print("GET /api/subscription/plans hit") # Debug print
+        logger.debug("GET /api/subscription/plans hit")
         return jsonify(SUBSCRIPTION_PLANS)
 
     @app.route('/api/subscription/status')

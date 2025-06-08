@@ -6,6 +6,7 @@ import { Button } from './components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './components/ui/dropdown-menu';
 import { LogIn, LogOut, User } from 'lucide-react';
+import Subscription from './Subscription';
 
 function App() {
   const { toast } = useToast();
@@ -69,6 +70,7 @@ function App() {
           <Routes>
             <Route path="/" element={<div>Home Page</div>} />
             <Route path="/login" element={<div>Login Page</div>} />
+            <Route path="/subscription" element={<Subscription />} />
           </Routes>
         </main>
       </div>
