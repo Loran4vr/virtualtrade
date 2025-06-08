@@ -12,7 +12,6 @@ from functools import wraps
 from flask_dance.contrib.google import make_google_blueprint, google
 from flask_dance.consumer import oauth_authorized
 from sqlalchemy.orm.exc import NoResultFound # Added for oauth_authorized handler
-from whitenoise.middleware import WhiteNoise # Import WhiteNoise
 
 # Load environment variables
 load_dotenv()
@@ -49,6 +48,7 @@ SUBSCRIPTION_PLANS = {
 FREE_TIER_LIMIT = 1000000  # 10 lakhs
 
 def create_app(config_name='default'):
+    from whitenoise.middleware import WhiteNoise # Import WhiteNoise here
     app = Flask(__name__, static_folder='static', static_url_path='/static')
     
     # Wrap app in WhiteNoise for static files
