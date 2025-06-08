@@ -346,43 +346,88 @@ def create_app():
                 'change_percent': None
             })
 
-        # If not in cache or outdated (and market is open), fetch from Alpha Vantage
-        url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={symbol}&apikey={api_key}"
+        # If not in cache or outdated (and market is open), fetch from Alpha Vantage Global Quote
+        if is_market_open:
+            url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={symbol}&apikey={api_key}"
+            response = requests.get(url)
+            data = response.json()
+            
+            if "Global Quote" in data:
+                quote = data["Global Quote"]
+                
+                # Save to historical prices
+                try:
+                    daily_data = HistoricalPrice(
+                        symbol=quote.get('01. symbol'),
+                        date=datetime.strptime(quote.get('07. latest trading day'), '%Y-%m-%d').date(),
+                        open=Decimal(str(quote.get('02. open'))),
+                        high=Decimal(str(quote.get('03. high'))),
+                        low=Decimal(str(quote.get('04. low'))),
+                        close=Decimal(str(quote.get('05. price'))), # Use current price as close for real-time
+                        volume=int(quote.get('06. volume'))
+                    )
+                    db.session.add(daily_data)
+                    db.session.commit()
+                except Exception as e:
+                    logger.error(f"Failed to save historical price for {symbol}: {e}")
+                    db.session.rollback()
+
+                return jsonify({
+                    'symbol': quote.get('01. symbol'),
+                    'open': float(quote.get('02. open')),
+                    'high': float(quote.get('03. high')),
+                    'low': float(quote.get('04. low')),
+                    'price': float(quote.get('05. price')),
+                    'volume': int(quote.get('06. volume')),
+                    'latest_trading_day': quote.get('07. latest trading day'),
+                    'previous_close': float(quote.get('08. previous close')),
+                    'change': float(quote.get('09. change')),
+                    'change_percent': quote.get('10. change percent')
+                })
+        
+        # If market is closed or Global Quote failed, try fetching from TIME_SERIES_DAILY_ADJUSTED for historical data
+        url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol={symbol}&apikey={api_key}"
         response = requests.get(url)
         data = response.json()
-        
-        if "Global Quote" in data:
-            quote = data["Global Quote"]
-            
-            # Save to historical prices
+
+        if "Time Series (Daily)" in data:
+            time_series = data["Time Series (Daily)"]
+            latest_date_str = sorted(time_series.keys(), reverse=True)[0] # Get the most recent date
+            latest_day_data = time_series[latest_date_str]
+
+            # Save to historical prices (or update if already exists)
             try:
-                daily_data = HistoricalPrice(
-                    symbol=quote.get('01. symbol'),
-                    date=datetime.strptime(quote.get('07. latest trading day'), '%Y-%m-%d').date(),
-                    open=Decimal(str(quote.get('02. open'))),
-                    high=Decimal(str(quote.get('03. high'))),
-                    low=Decimal(str(quote.get('04. low'))),
-                    close=Decimal(str(quote.get('05. price'))), # Use current price as close for real-time
-                    volume=int(quote.get('06. volume'))
-                )
+                daily_data = HistoricalPrice.query.filter_by(symbol=symbol, date=datetime.strptime(latest_date_str, '%Y-%m-%d').date()).first()
+                if not daily_data:
+                    daily_data = HistoricalPrice(
+                        symbol=symbol,
+                        date=datetime.strptime(latest_date_str, '%Y-%m-%d').date()
+                    )
+                daily_data.open = Decimal(str(latest_day_data.get('1. open')))
+                daily_data.high = Decimal(str(latest_day_data.get('2. high')))
+                daily_data.low = Decimal(str(latest_day_data.get('3. low')))
+                daily_data.close = Decimal(str(latest_day_data.get('4. close')))
+                daily_data.volume = int(latest_day_data.get('6. volume'))
                 db.session.add(daily_data)
                 db.session.commit()
             except Exception as e:
-                logger.error(f"Failed to save historical price for {symbol}: {e}")
+                logger.error(f"Failed to save historical time series data for {symbol}: {e}")
                 db.session.rollback()
 
             return jsonify({
-                'symbol': quote.get('01. symbol'),
-                'open': float(quote.get('02. open')),
-                'high': float(quote.get('03. high')),
-                'low': float(quote.get('04. low')),
-                'price': float(quote.get('05. price')),
-                'volume': int(quote.get('06. volume')),
-                'latest_trading_day': quote.get('07. latest trading day'),
-                'previous_close': float(quote.get('08. previous close')),
-                'change': float(quote.get('09. change')),
-                'change_percent': quote.get('10. change percent')
+                'symbol': symbol,
+                'open': float(daily_data.open) if daily_data.open else None,
+                'high': float(daily_data.high) if daily_data.high else None,
+                'low': float(daily_data.low) if daily_data.low else None,
+                'price': float(daily_data.close) if daily_data.close else None,
+                'volume': int(daily_data.volume) if daily_data.volume else None,
+                'latest_trading_day': latest_date_str,
+                'previous_close': float(daily_data.close) if daily_data.close else None,
+                'change': None,
+                'change_percent': None
             })
+
+        # If all else fails, return error
         return jsonify({'error': 'Could not retrieve quote for symbol', 'data': data}), 404
 
     @app.route('/api/market/search')
