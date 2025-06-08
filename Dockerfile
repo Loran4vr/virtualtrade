@@ -8,6 +8,7 @@ RUN npm install
 
 COPY frontend/ ./
 RUN npm run build
+RUN ls -la /app/frontend/build
 
 # Python backend
 FROM python:3.9-slim
