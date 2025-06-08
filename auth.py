@@ -26,7 +26,7 @@ def init_google_oauth(app):
         redirect_to="/" # Redirect to the root after successful OAuth
     )
     # Register the google_bp with auth_bp
-    auth_bp.register_blueprint(google_bp, url_prefix="/google")
+    auth_bp.register_blueprint(google_bp)
     logger.debug("Google OAuth blueprint registered with auth_bp")
 
 @auth_bp.route('/login')
