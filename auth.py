@@ -24,8 +24,8 @@ def init_google_oauth(app):
         client_secret=app.config.get('GOOGLE_CLIENT_SECRET'),
         scope=["profile", "email"],
         redirect_to="auth.google_callback", # Changed to a specific name within auth_bp
-        authorized_url="/auth/google/authorized", # Changed to match auth_bp prefix
-        redirect_url="/auth/google/authorized"  # Changed to match auth_bp prefix
+        authorized_url="/authorized", # Relative to google_bp's prefix
+        redirect_url="/authorized"  # Relative to google_bp's prefix
     )
     # Register the google_bp with auth_bp
     auth_bp.register_blueprint(google_bp, url_prefix="/google")
