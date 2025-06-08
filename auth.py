@@ -19,7 +19,7 @@ def create_auth_blueprint():
         logger.debug("Login route accessed")
         if not google.authorized:
             logger.debug("User not authorized, redirecting to Google login")
-            return redirect(url_for("auth.google.login"))
+            return redirect(url_for("google.login"))
         logger.debug("User already authorized, redirecting to frontend root")
         return redirect('/')
 
