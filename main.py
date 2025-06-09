@@ -452,6 +452,10 @@ def create_app():
     def server_error(e):
         return jsonify({'error': 'Internal server error'}), 500
     
+    @app.route('/')
+    def index():
+        return render_template('index.html')
+    
     return app
 
 if __name__ == '__main__':
