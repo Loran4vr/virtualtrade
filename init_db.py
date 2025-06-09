@@ -1,4 +1,4 @@
-import os
+# -*- coding: utf-8 -*-
 from main import create_app, db
 from models import User
 
@@ -12,13 +12,15 @@ def init_db():
         admin = User.query.filter_by(email='admin@example.com').first()
         if not admin:
             admin = User(
+                google_id='admin',
                 email='admin@example.com',
-                name='Admin User',
-                google_id='admin'
+                name='Admin User'
             )
             db.session.add(admin)
             db.session.commit()
             print("Created admin user")
+        else:
+            print("Admin user already exists")
         
         print("Database initialized successfully")
 
