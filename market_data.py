@@ -32,18 +32,24 @@ def search_symbol():
     if not query:
         return jsonify({'error': 'Query parameter is required'}), 400
     
+    print(f"Searching for stocks with query: {query}")
+    
     cache_key = f"search_{query}"
     cached_data = get_cached_data(cache_key)
     if cached_data:
+        print(f"Found cached data for query: {query}")
         return jsonify(cached_data)
     
     url = f"https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords={query}&apikey={ALPHA_VANTAGE_API_KEY}"
+    print(f"Making API request to: {url}")
     response = requests.get(url)
     
     if response.status_code != 200:
+        print(f"Error from Alpha Vantage API: {response.status_code}")
         return jsonify({'error': 'Failed to fetch data from Alpha Vantage'}), 500
     
     data = response.json()
+    print(f"Received data from Alpha Vantage: {data}")
     
     # Filter for Indian stocks (NSE/BSE)
     if 'bestMatches' in data:
@@ -51,8 +57,10 @@ def search_symbol():
                         if stock['4. region'] == 'India' or 
                            '.BSE' in stock['1. symbol'] or 
                            '.NSE' in stock['1. symbol']]
+        print(f"Filtered Indian stocks: {indian_stocks}")
         result = indian_stocks
     else:
+        print("No bestMatches found in response")
         result = []
     
     set_cached_data(cache_key, result)
@@ -145,4 +153,40 @@ def get_top_gainers_losers():
     data = response.json()
     set_cached_data(cache_key, data)
     return jsonify(data)
+
+@market_data_bp.route('/stock/<symbol>', methods=['GET'])
+def get_stock_data(symbol):
+    """Get daily stock data for a symbol"""
+    if not symbol:
+        return jsonify({'error': 'Symbol is required'}), 400
+    
+    cache_key = f"stock_{symbol}"
+    cached_data = get_cached_data(cache_key)
+    if cached_data:
+        return jsonify(cached_data)
+    
+    url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&outputsize=compact&apikey={ALPHA_VANTAGE_API_KEY}"
+    response = requests.get(url)
+    
+    if response.status_code != 200:
+        return jsonify({'error': 'Failed to fetch data from Alpha Vantage'}), 500
+    
+    data = response.json()
+    
+    if 'Error Message' in data:
+        return jsonify({'error': data['Error Message']}), 400
+    
+    if 'Time Series (Daily)' not in data:
+        return jsonify({'error': 'No time series data found'}), 404
+    
+    # Process the data to get the last 30 days
+    time_series = data['Time Series (Daily)']
+    dates = sorted(time_series.keys(), reverse=True)[:30]
+    processed_data = {
+        'dates': dates,
+        'prices': [float(time_series[date]['4. close']) for date in dates]
+    }
+    
+    set_cached_data(cache_key, processed_data)
+    return jsonify(processed_data)
 

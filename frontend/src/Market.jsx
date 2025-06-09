@@ -67,19 +67,17 @@ export default function Market() {
     if (!searchQuery.trim()) return;
     setSearchLoading(true);
     try {
+      console.log('Searching for:', searchQuery);
       const response = await fetch(`/api/market/search?q=${encodeURIComponent(searchQuery)}`);
       const data = await response.json();
+      console.log('Search results:', data);
       if (Array.isArray(data)) {
-        setSearchResults(data.map(stock => ({
-          '1. symbol': stock.symbol,
-          '2. name': stock.name,
-          '3. type': stock.type,
-          '4. region': stock.region
-        })));
+        setSearchResults(data);
       } else {
         setSearchResults([]);
       }
     } catch (error) {
+      console.error('Error searching stocks:', error);
       setSearchResults([]);
     } finally {
       setSearchLoading(false);
@@ -169,6 +167,21 @@ export default function Market() {
     localStorage.setItem('watchlist', JSON.stringify(updated));
   };
   const isInWatchlist = (symbol) => watchlist.includes(symbol);
+
+  const handleViewStock = async (stock) => {
+    setSelectedStock(stock);
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/market/stock/${stock['1. symbol']}`);
+      const data = await response.json();
+      setStockData(data);
+    } catch (error) {
+      console.error('Error fetching stock data:', error);
+      setStockData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Box sx={{ p: { xs: 1, md: 3 } }}>
