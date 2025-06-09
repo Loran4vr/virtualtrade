@@ -41,6 +41,7 @@ export default function Market() {
     const saved = localStorage.getItem('watchlist');
     return saved ? JSON.parse(saved) : [];
   });
+  const [chartTimeRange, setChartTimeRange] = useState('daily'); // '1min', '5min', 'daily', '5day', '1month', '1year', 'lifetime'
 
   useEffect(() => {
     async function fetchPortfolio() {
@@ -61,6 +62,31 @@ export default function Market() {
     }
     fetchPortfolio();
   }, []);
+
+  useEffect(() => {
+    if (selectedStock) {
+      fetchStockChartData(selectedStock['1. symbol'], chartTimeRange);
+    }
+  }, [selectedStock, chartTimeRange]);
+
+  const fetchStockChartData = async (symbol, timeRange) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/market/stock/${symbol}?interval=${timeRange}`);
+      const data = await response.json();
+      if (data.error) {
+        console.error('Error fetching chart data:', data.error);
+        setStockData(null);
+      } else {
+        setStockData(data);
+      }
+    } catch (error) {
+      console.error('Error fetching chart data:', error);
+      setStockData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Handle search
   const handleSearch = async () => {
@@ -168,19 +194,9 @@ export default function Market() {
   };
   const isInWatchlist = (symbol) => watchlist.includes(symbol);
 
-  const handleViewStock = async (stock) => {
+  const handleViewStock = (stock) => {
     setSelectedStock(stock);
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/market/stock/${stock['1. symbol']}`);
-      const data = await response.json();
-      setStockData(data);
-    } catch (error) {
-      console.error('Error fetching stock data:', error);
-      setStockData(null);
-    } finally {
-      setLoading(false);
-    }
+    setChartTimeRange('daily'); // Default to daily when viewing a new stock
   };
 
   return (
