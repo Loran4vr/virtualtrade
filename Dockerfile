@@ -41,7 +41,7 @@ USER myuser
 ENV DOCKER_MEMORY_LIMIT=1G
 
 # Create startup script
-RUN echo '#!/bin/bash\npython -O init_db.py\ngunicorn --bind 0.0.0.0:5000 --workers 2 --threads 2 --timeout 120 main:create_app()' > /app/start.sh
+RUN echo '#!/bin/bash\npython -O init_db.py\ngunicorn --bind 0.0.0.0:5000 --workers 2 --threads 2 --timeout 120 "main:create_app()"' > /app/start.sh
 RUN chmod +x /app/start.sh
 
 # Expose port
