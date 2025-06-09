@@ -18,6 +18,7 @@ from backend.subscription import init_stripe, SUBSCRIPTION_PLANS
 from whitenoise import WhiteNoise
 import requests
 from flask_cors import CORS
+from flask_login import LoginManager
 
 print("##### DEBUG: main.py file has been loaded and executed! #####")
 
@@ -78,6 +79,15 @@ def create_app():
 
     # Initialize database
     db.init_app(app)
+
+    # Initialize Flask-Login
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+    login_manager.login_view = 'auth.login'
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
 
     # Debug print SECRET_KEY status
     secret_key = app.config.get('SECRET_KEY')
