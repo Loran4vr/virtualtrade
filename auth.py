@@ -30,7 +30,8 @@ def create_auth_blueprint(app):
         client_id=os.environ.get('GOOGLE_CLIENT_ID'),
         client_secret=os.environ.get('GOOGLE_CLIENT_SECRET'),
         scope=['openid', 'email', 'profile'],
-        redirect_url=f"{base_url}/auth/google/authorized"
+        redirect_url=f"{base_url}/auth/google/authorized",
+        authorized_url="/auth/google/authorized"  # This is the path relative to the blueprint
     )
     
     # Register the Google blueprint with a unique name

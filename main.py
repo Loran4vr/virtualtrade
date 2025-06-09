@@ -110,21 +110,22 @@ def create_app():
         client_secret=app.config.get('GOOGLE_CLIENT_SECRET'),
         scope=["profile", "email"],
         redirect_to="index",
+        authorized_url="/auth/google/authorized",  # This is the path relative to the blueprint
         storage=SessionStorage()
     )
-    app.register_blueprint(google_bp, url_prefix='/auth')
+    app.register_blueprint(google_bp, url_prefix='/auth/google', name='google_oauth')
     logger.debug("Google OAuth blueprint registered directly with app")
 
     # NEW DEBUG: Check Flask's perception of Google OAuth URLs
     with app.test_request_context():
         try:
-            login_url = url_for("google.login", _external=True)
+            login_url = url_for("google_oauth.login", _external=True)
             logger.debug(f"DEBUG: Calculated google.login URL: {login_url}")
         except Exception as e:
             logger.debug(f"DEBUG: Error calculating google.login URL: {e}")
 
         try:
-            authorized_url = url_for("google.authorized", _external=True)
+            authorized_url = url_for("google_oauth.authorized", _external=True)
             logger.debug(f"DEBUG: Calculated google.authorized URL: {authorized_url}")
         except Exception as e:
             logger.debug(f"DEBUG: Error calculating google.authorized URL: {e}")
