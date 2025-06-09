@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
-from flask import Blueprint, redirect, url_for, session, jsonify, current_app, request
-from flask_dance.contrib.google import make_google_blueprint, google
+from flask import Blueprint, redirect, url_for, session, jsonify, current_app, request, flash
+from flask_login import login_user, logout_user, login_required, current_user
+from flask_dance.contrib.google import make_google_blueprint
 import os
 import json
 import logging
-from flask_dance.consumer.oauth2 import OAuth
+from flask_dance.consumer import OAuth
+from models import User, db
 
 print("##### DEBUG: auth.py file has been loaded and executed! #####")
 
@@ -12,27 +14,66 @@ print("##### DEBUG: auth.py file has been loaded and executed! #####")
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-def create_auth_blueprint():
+def create_auth_blueprint(app):
+    # Get the base URL from environment variable or default to localhost
+    base_url = os.environ.get('RENDER_EXTERNAL_URL', 'http://localhost')
+    
     auth_bp = Blueprint('auth', __name__)
-
+    
+    # Create Google OAuth blueprint
+    google_bp = make_google_blueprint(
+        client_id=os.environ.get('GOOGLE_CLIENT_ID'),
+        client_secret=os.environ.get('GOOGLE_CLIENT_SECRET'),
+        scope=['openid', 'email', 'profile'],
+        redirect_url=f"{base_url}/auth/google/authorized"
+    )
+    
+    app.register_blueprint(google_bp, url_prefix='/auth/google')
+    
     @auth_bp.route('/login')
     def login():
-        """Redirect to Google OAuth login"""
-        logger.debug("Login route accessed")
-        if not google.authorized:
-            logger.debug("User not authorized, redirecting to Google login")
-            return redirect(url_for("google.login"))
-        logger.debug("User already authorized, redirecting to frontend root")
-        return redirect('/')
-
+        if current_user.is_authenticated:
+            return redirect(url_for('main.index'))
+        return redirect(url_for('google.login'))
+    
     @auth_bp.route('/logout')
+    @login_required
     def logout():
-        """Log out the user"""
-        logger.debug("Logout route accessed")
-        session.pop('user_id', None)
-        session.pop('google_info', None)
-        return redirect('/') # Redirect to frontend root
-
+        logout_user()
+        return redirect(url_for('main.index'))
+    
+    @auth_bp.route('/auth/google/authorized')
+    def google_authorized():
+        if not google_bp.session.authorized:
+            flash('Access denied: reason={} error={}'.format(
+                request.args['error_reason'],
+                request.args['error_description']
+            ))
+            return redirect(url_for('main.index'))
+        
+        resp = google_bp.session.get('/oauth2/v2/userinfo')
+        if not resp.ok:
+            flash('Failed to fetch user info from Google')
+            return redirect(url_for('main.index'))
+        
+        google_info = resp.json()
+        google_id = google_info['id']
+        
+        # Find or create user
+        user = User.query.filter_by(google_id=google_id).first()
+        if not user:
+            user = User(
+                google_id=google_id,
+                email=google_info['email'],
+                name=google_info.get('name', ''),
+                picture=google_info.get('picture', '')
+            )
+            db.session.add(user)
+            db.session.commit()
+        
+        login_user(user)
+        return redirect(url_for('main.index'))
+    
     @auth_bp.route('/user')
     def get_user():
         """Get the current user info"""
@@ -42,7 +83,6 @@ def create_auth_blueprint():
             return jsonify({'authenticated': False}), 401
         
         # Fetch user from DB using user_id from session
-        from backend.models import User # Import here to avoid circular dependency
         user = User.query.get(session['user_id'])
         if not user:
             logger.debug(f"User with ID {session['user_id']} not found in DB")
