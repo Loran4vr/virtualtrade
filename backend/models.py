@@ -3,6 +3,11 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
+def init_db(app):
+    db.init_app(app)
+    with app.app_context():
+        db.create_all()
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     google_id = db.Column(db.String(100), unique=True)
