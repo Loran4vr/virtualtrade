@@ -1,4 +1,18 @@
-# Use Python 3.9 slim image as base
+# Use Node.js image for frontend build
+FROM node:16-alpine as frontend-builder
+
+# Set working directory
+WORKDIR /app
+
+# Copy frontend files
+COPY frontend/package*.json ./
+RUN npm install
+
+# Copy frontend source
+COPY frontend/ .
+RUN npm run build
+
+# Use Python 3.9 slim image as base for backend
 FROM python:3.9-slim
 
 # Set environment variables
@@ -29,8 +43,12 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application
+# Copy the backend application
 COPY . .
+
+# Create static directory and copy frontend build
+RUN mkdir -p static
+COPY --from=frontend-builder /app/build/ static/
 
 # Create a non-root user
 RUN useradd -m myuser

@@ -184,6 +184,15 @@ def create_app():
         session['test'] = 'Hello, World!'
         return jsonify({'session': dict(session)})
     
+    # Add catch-all route for React Router
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def serve(path):
+        if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+            return send_from_directory(app.static_folder, path)
+        else:
+            return send_from_directory(app.static_folder, 'index.html')
+
     # Add health check endpoint
     @app.route('/api/health')
     def health_check():
