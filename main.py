@@ -17,6 +17,11 @@ import logging
 from backend.subscription import init_stripe, SUBSCRIPTION_PLANS
 from whitenoise import WhiteNoise
 import requests
+from flask_cors import CORS
+from backend.database import get_db_connection
+from backend.models import init_db
+from backend.routes import register_routes
+from backend.config import Config
 
 print("##### DEBUG: main.py file has been loaded and executed! #####") # Added top-level print
 
@@ -43,7 +48,8 @@ def create_app():
         print(f"  {key}={value}")
     print("DEBUG: create_app: End of os.environ content")
 
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder='static')
+    CORS(app)
     
     # Determine config_name based on environment variable directly inside create_app
     config_name = os.getenv('FLASK_ENV', 'development')
@@ -189,7 +195,7 @@ def create_app():
     def test_session():
         session['test'] = 'Hello, World!'
         return jsonify({'session': dict(session)})
-
+    
     # Register blueprints
     app.register_blueprint(create_auth_blueprint(), url_prefix='/auth') # Now calls the blueprint factory
     app.register_blueprint(market_data_bp, url_prefix='/api/market')
@@ -240,14 +246,20 @@ def create_app():
     #     return decorated_function
     
     # Catch-all route for React Router (now handled by WhiteNoise)
-    @app.route('/')
-    def index():
-        logger.debug(f"Handling request for path: {request.path}")
-        response = make_response(send_from_directory(os.path.join(app.root_path, 'static'), 'index.html'))
-        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-        response.headers['Pragma'] = 'no-cache'
-        response.headers['Expires'] = '0'
-        return response
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def serve(path):
+        if path != "" and os.path.exists(app.static_folder + '/' + path):
+            return send_from_directory(app.static_folder, path)
+        else:
+            # Log the index.html path and its existence
+            index_path = os.path.join(app.static_folder, 'index.html')
+            logger.info(f"Attempting to serve index.html from: {index_path}")
+            logger.info(f"index.html exists: {os.path.exists(index_path)}")
+            if os.path.exists(index_path):
+                with open(index_path, 'r') as f:
+                    logger.info(f"index.html content preview: {f.read()[:200]}...")
+            return send_from_directory(app.static_folder, 'index.html')
     
     # API routes
     @app.route('/api/health')
@@ -348,12 +360,12 @@ def create_app():
 
         # If not in cache or outdated (and market is open), fetch from Alpha Vantage Global Quote
         if is_market_open:
-            url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={symbol}&apikey={api_key}"
-            response = requests.get(url)
-            data = response.json()
-            
-            if "Global Quote" in data:
-                quote = data["Global Quote"]
+        url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={symbol}&apikey={api_key}"
+        response = requests.get(url)
+        data = response.json()
+        
+        if "Global Quote" in data:
+            quote = data["Global Quote"]
                 
                 # Save to historical prices
                 try:
@@ -372,18 +384,18 @@ def create_app():
                     logger.error(f"Failed to save historical price for {symbol}: {e}")
                     db.session.rollback()
 
-                return jsonify({
-                    'symbol': quote.get('01. symbol'),
-                    'open': float(quote.get('02. open')),
-                    'high': float(quote.get('03. high')),
-                    'low': float(quote.get('04. low')),
-                    'price': float(quote.get('05. price')),
-                    'volume': int(quote.get('06. volume')),
-                    'latest_trading_day': quote.get('07. latest trading day'),
-                    'previous_close': float(quote.get('08. previous close')),
-                    'change': float(quote.get('09. change')),
-                    'change_percent': quote.get('10. change percent')
-                })
+            return jsonify({
+                'symbol': quote.get('01. symbol'),
+                'open': float(quote.get('02. open')),
+                'high': float(quote.get('03. high')),
+                'low': float(quote.get('04. low')),
+                'price': float(quote.get('05. price')),
+                'volume': int(quote.get('06. volume')),
+                'latest_trading_day': quote.get('07. latest trading day'),
+                'previous_close': float(quote.get('08. previous close')),
+                'change': float(quote.get('09. change')),
+                'change_percent': quote.get('10. change percent')
+            })
         
         # If market is closed or Global Quote failed, try fetching from TIME_SERIES_DAILY_ADJUSTED for historical data
         url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol={symbol}&apikey={api_key}"
@@ -429,162 +441,6 @@ def create_app():
 
         # If all else fails, return error
         return jsonify({'error': 'Could not retrieve quote for symbol', 'data': data}), 404
-
-    @app.route('/api/market/search')
-    def search_stock():
-        query = request.args.get('q')
-        if not query:
-            return jsonify({'error': 'Query parameter "q" is required'}), 400
-
-        api_key = current_app.config.get('ALPHA_VANTAGE_API_KEY')
-        if not api_key:
-            return jsonify({'error': 'Alpha Vantage API key not configured'}), 500
-        
-        url = f"https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords={query}&apikey={api_key}"
-        response = requests.get(url)
-        data = response.json()
-
-        if "bestMatches" in data:
-            results = []
-            for match in data["bestMatches"]:
-                results.append({
-                    'symbol': match.get('1. symbol'),
-                    'name': match.get('2. name'),
-                    'type': match.get('3. type'),
-                    'region': match.get('4. region'),
-                    'marketOpen': match.get('5. marketOpen'),
-                    'marketClose': match.get('6. marketClose'),
-                    'timezone': match.get('7. timezone'),
-                    'currency': match.get('8. currency'),
-                    'matchScore': float(match.get('9. matchScore'))
-                })
-            return jsonify(results)
-        return jsonify([]), 200 # Return empty array if no matches
-    
-    # Portfolio endpoints (MOVED TO PORTFOLIO.PY)
-    # @app.route('/api/portfolio/buy', methods=['POST'])
-    # @trading_limit_required
-    # def buy_stock():
-    #     if not session.get('user_id'):
-    #         return jsonify({'error': 'Not authenticated'}), 401
-        
-    #     data = request.json
-    #     symbol = data.get('symbol')
-    #     quantity = int(data.get('quantity', 0))
-    #     price = Decimal(str(data.get('price', 0)))
-        
-    #     # Check trading limit
-    #     can_trade, error = check_trading_limit(session['user_id'], quantity * price)
-    #     if not can_trade:
-    #         return jsonify({'error': error}), 400
-        
-    #     portfolio = Portfolio.query.filter_by(user_id=session['user_id']).first()
-    #     if not portfolio:
-    #         # Create portfolio if it doesn't exist
-    #         portfolio = Portfolio(user_id=session['user_id'], cash_balance=FREE_TIER_LIMIT)
-    #         db.session.add(portfolio)
-    #         db.session.commit() # Commit to get portfolio.id
-            
-    #     if portfolio.cash_balance < quantity * price:
-    #         return jsonify({'error': 'Insufficient cash balance'}), 400
-        
-    #     holding = Holding.query.filter_by(portfolio_id=portfolio.id, symbol=symbol).first()
-    #     if holding:
-    #         new_quantity = holding.quantity + quantity
-    #         new_avg_price = ((holding.quantity * holding.avg_price) + (quantity * price)) / new_quantity
-    #         holding.quantity = new_quantity
-    #         holding.avg_price = new_avg_price
-    #     else:
-    #         holding = Holding(portfolio_id=portfolio.id, symbol=symbol, quantity=quantity, avg_price=price)
-    #         db.session.add(holding)
-            
-    #     portfolio.cash_balance -= (quantity * price)
-        
-    #     transaction = Transaction(
-    #         user_id=session['user_id'],
-    #         symbol=symbol,
-    #         quantity=quantity,
-    #         price=price,
-    #         type='buy'
-    #     )
-    #     db.session.add(transaction)
-    #     db.session.commit()
-        
-    #     return jsonify({
-    #         'message': 'Stock purchased successfully',
-    #         'portfolio': portfolio.to_dict(),
-    #         'transaction': transaction.to_dict()
-    #     })
-
-    # @app.route('/api/portfolio/sell', methods=['POST'])
-    # @trading_limit_required
-    # def sell_stock():
-    #     if not session.get('user_id'):
-    #         return jsonify({'error': 'Not authenticated'}), 401
-        
-    #     data = request.json
-    #     symbol = data.get('symbol')
-    #     quantity_to_sell = int(data.get('quantity', 0))
-    #     price = Decimal(str(data.get('price', 0)))
-        
-    #     # Check trading limit (selling adds to cash, so limit check is different)
-    #     # This check might need to be adjusted based on how selling affects total value for limit purposes
-        
-    #     portfolio = Portfolio.query.filter_by(user_id=session['user_id']).first()
-    #     if not portfolio:
-    #         return jsonify({'error': 'Portfolio not found'}), 404
-        
-    #     holding = Holding.query.filter_by(portfolio_id=portfolio.id, symbol=symbol).first()
-    #     if not holding or holding.quantity < quantity_to_sell:
-    #         return jsonify({'error': 'Insufficient shares to sell'}), 400
-            
-    #     holding.quantity -= quantity_to_sell
-    #     portfolio.cash_balance += (quantity_to_sell * price)
-        
-    #     if holding.quantity == 0:
-    #         db.session.delete(holding)
-            
-    #     transaction = Transaction(
-    #         user_id=session['user_id'],
-    #         symbol=symbol,
-    #         quantity=quantity_to_sell,
-    #         price=price,
-    #         type='sell'
-    #     )
-    #     db.session.add(transaction)
-    #     db.session.commit()
-        
-    #     return jsonify({
-    #         'message': 'Stock sold successfully',
-    #         'portfolio': portfolio.to_dict(),
-    #         'transaction': transaction.to_dict()
-    #     })
-
-    # @app.route('/api/portfolio', methods=['GET'])
-    # def get_portfolio():
-    #     if not session.get('user_id'):
-    #         return jsonify({'error': 'Not authenticated'}), 401
-        
-    #     portfolio = Portfolio.query.filter_by(user_id=session['user_id']).first()
-    #     if not portfolio:
-    #         # If no portfolio, return a default empty one with free tier limit
-    #         return jsonify({
-    #             'id': None,
-    #             'user_id': session['user_id'],
-    #             'cash_balance': FREE_TIER_LIMIT,
-    #             'holdings': [],
-    #             'created_at': datetime.utcnow().isoformat(),
-    #             'last_updated': datetime.utcnow().isoformat()
-    #         })
-    #     return jsonify(portfolio.to_dict())
-
-    # @app.route('/api/transactions', methods=['GET'])
-    # def get_transactions():
-    #     if not session.get('user_id'):
-    #         return jsonify({'error': 'Not authenticated'}), 401
-        
-    #     transactions = Transaction.query.filter_by(user_id=session['user_id']).order_by(Transaction.timestamp.desc()).all()
-    #     return jsonify([t.to_dict() for t in transactions])
 
     @app.errorhandler(404)
     def not_found(e):

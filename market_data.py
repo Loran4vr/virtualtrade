@@ -30,6 +30,7 @@ def search_symbol():
     """Search for a stock symbol"""
     query = request.args.get('q', '')
     if not query:
+        print("Search query is empty")
         return jsonify({'error': 'Query parameter is required'}), 400
     
     print(f"Searching for stocks with query: {query}")
@@ -51,6 +52,14 @@ def search_symbol():
     data = response.json()
     print(f"Received data from Alpha Vantage: {data}")
     
+    # Check for API errors
+    if 'Error Message' in data:
+        print(f"Alpha Vantage API error: {data['Error Message']}")
+        return jsonify({'error': data['Error Message']}), 500
+    
+    if 'Note' in data:
+        print(f"Alpha Vantage API note: {data['Note']}")
+    
     # Filter for Indian stocks (NSE/BSE)
     if 'bestMatches' in data:
         indian_stocks = [stock for stock in data['bestMatches'] 
@@ -58,13 +67,28 @@ def search_symbol():
                            '.BSE' in stock['1. symbol'] or 
                            '.NSE' in stock['1. symbol']]
         print(f"Filtered Indian stocks: {indian_stocks}")
-        result = indian_stocks
+        
+        # Format the response
+        formatted_results = []
+        for stock in indian_stocks:
+            formatted_results.append({
+                'symbol': stock['1. symbol'],
+                'name': stock['2. name'],
+                'type': stock['3. type'],
+                'region': stock['4. region'],
+                'marketOpen': stock['5. marketOpen'],
+                'marketClose': stock['6. marketClose'],
+                'timezone': stock['7. timezone'],
+                'currency': stock['8. currency'],
+                'matchScore': float(stock['9. matchScore'])
+            })
+        
+        print(f"Returning {len(formatted_results)} formatted results")
+        set_cached_data(cache_key, formatted_results)
+        return jsonify(formatted_results)
     else:
         print("No bestMatches found in response")
-        result = []
-    
-    set_cached_data(cache_key, result)
-    return jsonify(result)
+        return jsonify([])
 
 @market_data_bp.route('/quote', methods=['GET'])
 def get_quote():

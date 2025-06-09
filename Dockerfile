@@ -6,8 +6,8 @@ WORKDIR /app/frontend
 COPY frontend/package.json ./
 COPY frontend/ ./
 ENV PUBLIC_URL=.
-# Force a clean build
-RUN rm -rf build && npm cache clean --force && npm install && npm run build
+RUN npm install
+RUN npm run build
 RUN ls -la /app/frontend/build
 
 # Python backend

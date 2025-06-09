@@ -73,16 +73,16 @@ def initialize_portfolio():
     user_id = get_user_id()
     if not user_id:
         return jsonify({'error': 'Authentication required'}), 401
-
+    
     portfolio = Portfolio.query.filter_by(user_id=user_id).first()
     if portfolio:
         return jsonify({'message': 'Portfolio already exists', 'portfolio': portfolio.to_dict()})
-
+    
     # Create new portfolio with initial virtual funds
     portfolio = Portfolio(user_id=user_id, cash_balance=Decimal(str(FREE_TIER_LIMIT)))
     db.session.add(portfolio)
     db.session.commit()
-
+    
     return jsonify({
         'message': 'Portfolio initialized successfully',
         'portfolio': portfolio.to_dict()
@@ -94,7 +94,7 @@ def get_balance():
     user_id = get_user_id()
     portfolio = Portfolio.query.filter_by(user_id=user_id).first()
     if not portfolio:
-        # Auto-initialize portfolio if not found
+    # Auto-initialize portfolio if not found
         # This should ideally be handled by the frontend calling /initialize explicitly once
         # For robustness, we can create it here if it doesn't exist, but it's better if the frontend manages it
         portfolio = Portfolio(user_id=user_id, cash_balance=Decimal(str(FREE_TIER_LIMIT)))
@@ -122,12 +122,12 @@ def buy_stock():
     symbol = data.get('symbol')
     quantity = int(data.get('quantity', 0))
     price = Decimal(str(data.get('price', 0)))
-
+    
     if quantity <= 0 or price <= 0:
         return jsonify({'error': 'Quantity and price must be positive'}), 400
-
+    
     total_cost = quantity * price
-
+    
     can_trade, error_msg = check_trading_limit(user_id, total_cost, is_sell=False)
     if not can_trade:
         return jsonify({'error': error_msg}), 400
@@ -165,7 +165,7 @@ def buy_stock():
     )
     db.session.add(transaction)
     db.session.commit()
-
+    
     return jsonify({
         'message': 'Stock purchased successfully',
         'portfolio': portfolio.to_dict(),
@@ -187,7 +187,7 @@ def sell_stock():
     portfolio = Portfolio.query.filter_by(user_id=user_id).first()
     if not portfolio:
         return jsonify({'error': 'Portfolio not found'}), 404
-
+    
     holding = Holding.query.filter_by(portfolio_id=portfolio.id, symbol=symbol).first()
     if not holding or holding.quantity < quantity_to_sell:
         return jsonify({'error': 'Insufficient shares to sell'}), 400
@@ -207,7 +207,7 @@ def sell_stock():
     )
     db.session.add(transaction)
     db.session.commit()
-
+    
     return jsonify({
         'message': 'Stock sold successfully',
         'portfolio': portfolio.to_dict(),
@@ -220,21 +220,21 @@ def get_transactions():
     user_id = get_user_id()
     # Fetch transactions from the database
     transactions = Transaction.query.filter_by(user_id=user_id).order_by(Transaction.created_at.desc()).all()
-
+    
     # Optional filtering by date range (frontend typically handles this, but backend can support)
     start_date_str = request.args.get('start_date')
     end_date_str = request.args.get('end_date')
-
+    
     filtered_transactions = transactions
-
+    
     if start_date_str:
         start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
         filtered_transactions = [t for t in filtered_transactions if t.created_at.date() >= start_date.date()]
-
+    
     if end_date_str:
         end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
         filtered_transactions = [t for t in filtered_transactions if t.created_at.date() <= end_date.date()]
-
+    
     return jsonify({'transactions': [t.to_dict() for t in filtered_transactions]})
 
 @portfolio_bp.route('/reset', methods=['POST'])
@@ -257,7 +257,7 @@ def reset_portfolio():
     # Optionally, delete all past transactions for the user as well on reset
     # Transaction.query.filter_by(user_id=user_id).delete()
     # db.session.commit()
-
+    
     return jsonify({
         'message': 'Portfolio reset successfully',
         'portfolio': portfolio.to_dict()

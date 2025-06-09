@@ -147,6 +147,7 @@ Removed the parentheses `()` from `main:create_app()` in the `Dockerfile`'s `CMD
      - If data is not found or is outdated, fetch from Alpha Vantage.
      - Store the fetched daily data (especially the close price) into the `HistoricalPrice` table.
      - Serve the cached data (last known closing price) when the market is closed.
+  3. **Implemented fallback to `TIME_SERIES_DAILY_ADJUSTED`**: When the market is closed or `GLOBAL_QUOTE` fails, the system now fetches historical daily data to ensure a displayable last recorded price.
 - **Status**: 🟢 DEPLOYED - Changes deployed to remote, awaiting user redeployment and verification.
 
 ## Current Status
