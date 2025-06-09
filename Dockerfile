@@ -40,11 +40,12 @@ USER myuser
 # Set memory limits for the container
 ENV DOCKER_MEMORY_LIMIT=1G
 
-# Run database initialization script with memory optimization
-RUN python -O init_db.py
+# Create startup script
+RUN echo '#!/bin/bash\npython -O init_db.py\ngunicorn --bind 0.0.0.0:5000 --workers 2 --threads 2 --timeout 120 main:create_app()' > /app/start.sh
+RUN chmod +x /app/start.sh
 
 # Expose port
 EXPOSE 5000
 
 # Start the application
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "2", "--timeout", "120", "main:create_app()"] 
+CMD ["/app/start.sh"] 
