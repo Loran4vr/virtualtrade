@@ -1,58 +1,75 @@
-# Use Node.js for building frontend
-FROM node:20-alpine as frontend-builder
+# Use Python 3.9 slim image
+FROM python:3.9-slim as backend-builder
 
-WORKDIR /app/frontend
-
-COPY frontend/package.json ./
-COPY frontend/ ./
-ENV PUBLIC_URL=.
-RUN npm install
-RUN npm run build
-RUN ls -la /app/frontend/build
-
-# Python backend
-FROM python:3.9-slim
-
+# Set working directory
 WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first to leverage Docker cache
-COPY requirements.prod.txt .
-RUN pip install --no-cache-dir -r requirements.prod.txt
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application
 COPY . .
 
-# Verify backend directory contents
-RUN ls -la /app/backend
-
-# Set FLASK_ENV for the init_db.py run step
-ENV FLASK_ENV=production
+# Create static directory if it doesn't exist
+RUN mkdir -p static
 
 # Run database initialization script
 RUN python init_db.py
 
+# Use Node.js image for frontend
+FROM node:16-alpine as frontend-builder
+
+# Set working directory
+WORKDIR /app
+
+# Copy frontend files
+COPY frontend/package*.json ./
+RUN npm install
+
+COPY frontend/ .
+RUN npm run build
+
+# Final stage
+FROM python:3.9-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy backend files from backend-builder
+COPY --from=backend-builder /app /app
+
+# Copy frontend build from frontend-builder
+COPY --from=frontend-builder /app/build /app/static
+
 # Create static directory if it doesn't exist
-RUN mkdir -p /app/static
-
-# Copy built frontend files
-COPY --from=frontend-builder /app/frontend/build/static/ /app/static/
-COPY --from=frontend-builder /app/frontend/build/index.html /app/static/index.html
-
-# Verify static files exist
-RUN ls -la /app/static
+RUN mkdir -p static
 
 # Set environment variables
 ENV FLASK_APP=main.py
-ENV PORT=5000
-ENV PYTHONPATH=/app:$PYTHONPATH
+ENV FLASK_ENV=production
+ENV PYTHONUNBUFFERED=1
 
-# Expose the port
+# Expose port
 EXPOSE 5000
 
-# Run the application with Gunicorn
+# Start command
 CMD ["gunicorn", "--config", "gunicorn_config.py", "main:app"] 

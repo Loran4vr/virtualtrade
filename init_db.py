@@ -1,17 +1,26 @@
-from flask import Flask # Import Flask directly
-import os # Import os for environment variables
-from main import db # Import db from main
+import os
+from main import create_app, db
+from models import User
 
-# Create a minimal Flask app instance for database context
-app = Flask(__name__)
+def init_db():
+    app = create_app()
+    with app.app_context():
+        # Create all tables
+        db.create_all()
+        
+        # Check if we need to create an admin user
+        admin = User.query.filter_by(email='admin@example.com').first()
+        if not admin:
+            admin = User(
+                email='admin@example.com',
+                name='Admin User',
+                google_id='admin'
+            )
+            db.session.add(admin)
+            db.session.commit()
+            print("Created admin user")
+        
+        print("Database initialized successfully")
 
-# Explicitly set database URI for this minimal app instance
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///site.db')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False # Recommended setting for Flask-SQLAlchemy
-
-# Initialize db with this app
-db.init_app(app)
-
-with app.app_context():
-    db.create_all()
-    print("Database tables created successfully!") 
+if __name__ == '__main__':
+    init_db() 
