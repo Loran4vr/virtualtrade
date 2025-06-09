@@ -14,7 +14,13 @@ print("##### DEBUG: auth.py file has been loaded and executed! #####")
 
 def create_auth_blueprint(app):
     # Get the base URL from environment variable or default to localhost
-    base_url = os.environ.get('RENDER_EXTERNAL_URL', 'http://localhost')
+    is_production = os.environ.get('FLASK_ENV') == 'production'
+    if is_production:
+        base_url = 'https://virtualtrade.onrender.com'
+    else:
+        base_url = 'http://localhost:5000'
+    
+    logger.debug(f"Environment: {'Production' if is_production else 'Development'}")
     logger.debug(f"Using base URL: {base_url}")
     
     auth_bp = Blueprint('auth', __name__)
@@ -90,7 +96,6 @@ def create_auth_blueprint(app):
             login_user(user)
             logger.debug(f"User logged in successfully: {user.email}")
             return redirect(url_for('main.index'))
-            
         except Exception as e:
             logger.error(f"Error during Google OAuth callback: {str(e)}", exc_info=True)
             flash('An error occurred during login')
