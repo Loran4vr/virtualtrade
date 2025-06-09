@@ -59,6 +59,7 @@ def search_symbol():
     
     if 'Note' in data:
         print(f"Alpha Vantage API note: {data['Note']}")
+        return jsonify({'error': 'API rate limit reached. Please try again later.'}), 429
     
     # Filter for Indian stocks (NSE/BSE)
     if 'bestMatches' in data:
@@ -74,7 +75,7 @@ def search_symbol():
         return jsonify(data)
     else:
         print("No bestMatches found in response")
-        return jsonify({'bestMatches': []})
+        return jsonify({'bestMatches': [], 'message': 'No matching stocks found'})
 
 @market_data_bp.route('/quote', methods=['GET'])
 def get_quote():

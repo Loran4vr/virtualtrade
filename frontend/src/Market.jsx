@@ -97,17 +97,33 @@ export default function Market() {
       const response = await fetch(`/api/market/search?q=${encodeURIComponent(searchQuery)}`);
       const data = await response.json();
       console.log('Search results:', data);
-      if (data.bestMatches && Array.isArray(data.bestMatches)) {
-        setSearchResults(data.bestMatches);
-      } else if (data.error) {
+      
+      if (response.status === 429) {
+        // Rate limit error
+        setSearchResults([]);
+        alert('API rate limit reached. Please try again in a few minutes.');
+        return;
+      }
+      
+      if (data.error) {
         console.error('Search error:', data.error);
         setSearchResults([]);
+        alert(data.error);
+        return;
+      }
+      
+      if (data.bestMatches && Array.isArray(data.bestMatches)) {
+        setSearchResults(data.bestMatches);
+        if (data.bestMatches.length === 0 && data.message) {
+          alert(data.message);
+        }
       } else {
         setSearchResults([]);
       }
     } catch (error) {
       console.error('Error searching stocks:', error);
       setSearchResults([]);
+      alert('An error occurred while searching. Please try again.');
     } finally {
       setSearchLoading(false);
     }
