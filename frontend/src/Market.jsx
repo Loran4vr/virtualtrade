@@ -231,22 +231,28 @@ export default function Market() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {searchResults.map((stock) => (
-                      <TableRow key={stock['1. symbol']} hover>
-                        <TableCell>{stock['1. symbol']}</TableCell>
-                        <TableCell>{stock['2. name']}</TableCell>
-                        <TableCell>{stock['3. type']}</TableCell>
-                        <TableCell>{stock['4. region']}</TableCell>
-                        <TableCell align="right">
-                          <Button variant="outlined" size="small" onClick={() => handleSelectStock(stock)}>
-                            View
-                          </Button>
-                          <IconButton onClick={() => isInWatchlist(stock['1. symbol']) ? removeFromWatchlist(stock['1. symbol']) : addToWatchlist(stock['1. symbol'])}>
-                            {isInWatchlist(stock['1. symbol']) ? <StarIcon color="warning" /> : <StarBorderIcon />}
-                          </IconButton>
-                        </TableCell>
+                    {searchResults.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} align="center">No results found</TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      searchResults.map((stock) => (
+                        <TableRow key={stock['1. symbol']} hover>
+                          <TableCell>{stock['1. symbol']}</TableCell>
+                          <TableCell>{stock['2. name']}</TableCell>
+                          <TableCell>{stock['3. type']}</TableCell>
+                          <TableCell>{stock['4. region']}</TableCell>
+                          <TableCell align="right">
+                            <Button variant="outlined" size="small" onClick={() => handleSelectStock(stock)}>
+                              View
+                            </Button>
+                            <IconButton onClick={() => isInWatchlist(stock['1. symbol']) ? removeFromWatchlist(stock['1. symbol']) : addToWatchlist(stock['1. symbol'])}>
+                              {isInWatchlist(stock['1. symbol']) ? <StarIcon color="warning" /> : <StarBorderIcon />}
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
