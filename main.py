@@ -184,14 +184,29 @@ def create_app():
         session['test'] = 'Hello, World!'
         return jsonify({'session': dict(session)})
     
+    # Add error handlers
+    @app.errorhandler(500)
+    def internal_error(error):
+        logger.error(f"Internal server error: {str(error)}", exc_info=True)
+        return jsonify({'error': 'Internal server error'}), 500
+
+    @app.errorhandler(404)
+    def not_found_error(error):
+        logger.error(f"Not found error: {str(error)}", exc_info=True)
+        return jsonify({'error': 'Not found'}), 404
+
     # Add catch-all route for React Router
     @app.route('/', defaults={'path': ''})
     @app.route('/<path:path>')
     def serve(path):
-        if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
-            return send_from_directory(app.static_folder, path)
-        else:
-            return send_from_directory(app.static_folder, 'index.html')
+        try:
+            if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+                return send_from_directory(app.static_folder, path)
+            else:
+                return send_from_directory(app.static_folder, 'index.html')
+        except Exception as e:
+            logger.error(f"Error serving path {path}: {str(e)}", exc_info=True)
+            return jsonify({'error': 'Internal server error'}), 500
 
     # Add health check endpoint
     @app.route('/api/health')
