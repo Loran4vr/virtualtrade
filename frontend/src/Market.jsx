@@ -67,10 +67,15 @@ export default function Market() {
     if (!searchQuery.trim()) return;
     setSearchLoading(true);
     try {
-      const response = await fetch(`/api/market/search?query=${encodeURIComponent(searchQuery)}`);
+      const response = await fetch(`/api/market/search?q=${encodeURIComponent(searchQuery)}`);
       const data = await response.json();
-      if (data.bestMatches) {
-        setSearchResults(data.bestMatches);
+      if (Array.isArray(data)) {
+        setSearchResults(data.map(stock => ({
+          '1. symbol': stock.symbol,
+          '2. name': stock.name,
+          '3. type': stock.type,
+          '4. region': stock.region
+        })));
       } else {
         setSearchResults([]);
       }

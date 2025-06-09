@@ -28,7 +28,7 @@ def set_cached_data(cache_key, data, expiry_minutes=15):
 @market_data_bp.route('/search', methods=['GET'])
 def search_symbol():
     """Search for a stock symbol"""
-    query = request.args.get('query', '')
+    query = request.args.get('q', '')
     if not query:
         return jsonify({'error': 'Query parameter is required'}), 400
     
@@ -51,9 +51,9 @@ def search_symbol():
                         if stock['4. region'] == 'India' or 
                            '.BSE' in stock['1. symbol'] or 
                            '.NSE' in stock['1. symbol']]
-        result = {'bestMatches': indian_stocks}
+        result = indian_stocks
     else:
-        result = data
+        result = []
     
     set_cached_data(cache_key, result)
     return jsonify(result)
