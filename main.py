@@ -197,7 +197,7 @@ def create_app():
         return jsonify({'session': dict(session)})
     
     # Register blueprints
-    app.register_blueprint(create_auth_blueprint(), url_prefix='/auth') # Now calls the blueprint factory
+    app.register_blueprint(create_auth_blueprint(app), url_prefix='/auth')  # Pass app to the blueprint factory
     app.register_blueprint(market_data_bp, url_prefix='/api/market')
     app.register_blueprint(portfolio_bp, url_prefix='/api/portfolio')
 
