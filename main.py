@@ -41,24 +41,25 @@ FREE_TIER_LIMIT = 1000000  # 10 lakhs
 
 def create_app():
     try:
+        logger.info("Starting application initialization...")
+        
         # NEW DEBUG: Print all environment variables at the start of create_app
-        print("DEBUG: create_app: os.environ content:")
+        logger.debug("Environment variables:")
         for key, value in os.environ.items():
-            print(f"  {key}={value}")
-        print("DEBUG: create_app: End of os.environ content")
+            logger.debug(f"  {key}={value}")
 
         app = Flask(__name__, static_folder='static')
         CORS(app)
         
         # Determine config_name based on environment variable directly inside create_app
         config_name = os.getenv('FLASK_ENV', 'development')
-        print(f"DEBUG: create_app: Loading Flask configuration: {config_name}")
+        logger.info(f"Loading Flask configuration: {config_name}")
         
         # Use WhiteNoise to serve static files
         app.wsgi_app = WhiteNoise(app.wsgi_app, root=os.path.join(app.root_path, 'static'))
         app.wsgi_app.add_files(os.path.join(app.root_path, 'static'), prefix='/')
 
-        print(f"Flask static_folder: {os.path.join(app.root_path, 'static')}")
+        logger.debug(f"Static folder: {os.path.join(app.root_path, 'static')}")
         
         # Load configuration
         app.config.from_object(config[config_name])
@@ -70,19 +71,27 @@ def create_app():
         app.config['SESSION_COOKIE_DOMAIN'] = None
         app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
         
-        # Debug print actual cookie settings from app.config
-        print(f"DEBUG: Flask app.config cookie settings: Secure={app.config.get('SESSION_COOKIE_SECURE')}, HttpOnly={app.config.get('SESSION_COOKIE_HTTPONLY')}, SameSite={app.config.get('SESSION_COOKIE_SAMESITE')}")
+        logger.debug(f"Cookie settings: Secure={app.config.get('SESSION_COOKIE_SECURE')}, HttpOnly={app.config.get('SESSION_COOKIE_HTTPONLY')}, SameSite={app.config.get('SESSION_COOKIE_SAMESITE')}")
         
         # Ensure SQLALCHEMY_DATABASE_URI is set
         app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///site.db')
         app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
         
-        print(f"SQLALCHEMY_DATABASE_URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
+        logger.debug(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
 
         # Initialize database
+        logger.info("Initializing database...")
         db.init_app(app)
+        with app.app_context():
+            try:
+                db.create_all()
+                logger.info("Database tables created successfully")
+            except Exception as e:
+                logger.error(f"Error creating database tables: {str(e)}", exc_info=True)
+                raise
 
         # Initialize Flask-Login
+        logger.info("Initializing Flask-Login...")
         login_manager = LoginManager()
         login_manager.init_app(app)
         login_manager.login_view = 'auth.login'
@@ -96,12 +105,10 @@ def create_app():
         if secret_key:
             logger.debug(f"SECRET_KEY loaded. Length: {len(secret_key)}. Masked: {secret_key[:5]}...{secret_key[-5:]}")
         else:
-            logger.debug("SECRET_KEY not loaded or is None.")
-
-        # Debug print cookie settings
-        logger.debug(f"Cookie settings: Secure={app.config.get('SESSION_COOKIE_SECURE')}, HttpOnly={app.config.get('SESSION_COOKIE_HTTPONLY')}, SameSite={app.config.get('SESSION_COOKIE_SAMESITE')}")
+            logger.warning("SECRET_KEY not loaded or is None.")
 
         # Initialize Google OAuth
+        logger.info("Initializing Google OAuth...")
         if app.config.get('DEBUG'):
             os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
         os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
@@ -116,88 +123,14 @@ def create_app():
             storage=SessionStorage()
         )
         app.register_blueprint(google_bp, url_prefix='/auth/google', name='google_oauth')
-        logger.debug("Google OAuth blueprint registered directly with app")
-
-        # NEW DEBUG: Check Flask's perception of Google OAuth URLs
-        with app.test_request_context():
-            try:
-                login_url = url_for("google_oauth.login", _external=True)
-                logger.debug(f"DEBUG: Calculated google.login URL: {login_url}")
-            except Exception as e:
-                logger.debug(f"DEBUG: Error calculating google.login URL: {e}")
-
-            try:
-                authorized_url = url_for("google_oauth.authorized", _external=True)
-                logger.debug(f"DEBUG: Calculated google.authorized URL: {authorized_url}")
-            except Exception as e:
-                logger.debug(f"DEBUG: Error calculating google.authorized URL: {e}")
+        logger.info("Google OAuth blueprint registered")
 
         # Initialize Stripe
+        logger.info("Initializing Stripe...")
         init_stripe(app)
 
-        # Handle Google OAuth callback for user creation/login
-        @oauth_authorized.connect_via(google_bp)
-        def google_logged_in(blueprint, token):
-            logger.debug(f"google_logged_in: Received token: {token is not None}")
-            if not token:
-                logger.error("google_logged_in: Token is None, returning False")
-                return False
-
-            resp = google.get("/oauth2/v2/userinfo")
-            logger.debug(f"google_logged_in: Google user info response status: {resp.ok}")
-            if not resp.ok:
-                logger.error(f"google_logged_in: Failed to get user info: {resp.status_code} - {resp.text}")
-                return False
-
-            google_info = resp.json()
-            google_user_id = google_info['id']
-
-            # Find or create user
-            user = User.query.filter_by(google_id=google_user_id).first()
-            if user:
-                logger.debug(f"google_logged_in: Found existing user: {user.email} (ID: {user.id})")
-            else:
-                user = User(
-                    google_id=google_user_id,
-                    email=google_info['email'],
-                    name=google_info['name'],
-                    picture=google_info.get('picture')
-                )
-                db.session.add(user)
-                db.session.commit()
-                logger.debug(f"google_logged_in: Created new user: {user.email} (ID: {user.id})")
-
-            # Create session
-            session.clear()
-            session['user_id'] = user.id
-            session.permanent = True
-            session.modified = True
-            
-            # Store OAuth state in session
-            session['oauth_state'] = request.args.get('state')
-            logger.debug(f"DEBUG:main:google_logged_in: Stored OAuth state in session: {session.get('oauth_state')}")
-            print(f"DEBUG:main:google_logged_in: Session user_id set to: {session.get('user_id')}")
-            print(f"DEBUG:main:google_logged_in: Session is permanent: {session.permanent}")
-            print(f"DEBUG:main:google_logged_in: Session type: {type(session)}")
-
-            # Ensure the session is saved before redirecting
-            session.modified = True
-
-            # Redirect to the main page or dashboard after successful login
-            resp = make_response(redirect('/'))
-            
-            logger.debug(f"google_logged_in: User {user.email} successfully logged in, user_id: {user.id}")
-            logger.debug(f"google_logged_in: Full session after setting user_id: {dict(session)}")
-
-            return resp
-        
-        # Test session route
-        @app.route('/test-session')
-        def test_session():
-            session['test'] = 'Hello, World!'
-            return jsonify({'session': dict(session)})
-        
         # Register blueprints
+        logger.info("Registering blueprints...")
         app.register_blueprint(create_auth_blueprint(app), url_prefix='/auth')
         app.register_blueprint(market_data_bp, url_prefix='/api/market')
         app.register_blueprint(portfolio_bp, url_prefix='/api/portfolio')
@@ -229,11 +162,26 @@ def create_app():
         # Add health check endpoint
         @app.route('/api/health')
         def health_check():
-            return jsonify({'status': 'ok'}), 200
+            try:
+                # Test database connection
+                db.session.execute('SELECT 1')
+                return jsonify({
+                    'status': 'ok',
+                    'database': 'connected',
+                    'timestamp': datetime.utcnow().isoformat()
+                }), 200
+            except Exception as e:
+                logger.error(f"Health check failed: {str(e)}", exc_info=True)
+                return jsonify({
+                    'status': 'error',
+                    'error': str(e),
+                    'timestamp': datetime.utcnow().isoformat()
+                }), 500
 
         # Clean up memory
         gc.collect()
-
+        
+        logger.info("Application initialization completed successfully")
         return app
 
     except Exception as e:

@@ -6,16 +6,16 @@ bind = "0.0.0.0:" + str(os.getenv("PORT", "5000"))
 backlog = 2048
 
 # Worker processes
-workers = multiprocessing.cpu_count() * 2 + 1
+workers = 2  # Reduced number of workers
 worker_class = "gevent"
-worker_connections = 1000
-timeout = 30
+worker_connections = 500  # Reduced connections
+timeout = 60  # Increased timeout
 keepalive = 2
 
 # Logging
 accesslog = "-"
 errorlog = "-"
-loglevel = "info"
+loglevel = "debug"  # Changed to debug for more information
 
 # Process naming
 proc_name = "virtualtrade"
