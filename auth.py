@@ -24,13 +24,14 @@ def create_auth_blueprint(app):
         redirect_url=f"{base_url}/auth/google/authorized"
     )
     
-    app.register_blueprint(google_bp, url_prefix='/auth/google')
+    # Register the Google blueprint with a unique name
+    app.register_blueprint(google_bp, url_prefix='/auth/google', name='google_oauth')
     
     @auth_bp.route('/login')
     def login():
         if current_user.is_authenticated:
             return redirect(url_for('main.index'))
-        return redirect(url_for('google.login'))
+        return redirect(url_for('google_oauth.login'))
     
     @auth_bp.route('/logout')
     @login_required
