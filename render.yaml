@@ -20,5 +20,15 @@ services:
         sync: false
       - key: ALPHA_VANTAGE_API_KEY
         sync: false
+      - key: PYTHONMALLOC
+        value: debug
+      - key: PYTHONMALLOCSTATS
+        value: "1"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PYTHONHASHSEED
+        value: "0"
+      - key: PYTHONIOENCODING
+        value: "utf-8"
     autoDeploy: true
     branch: main 
