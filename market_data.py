@@ -447,61 +447,43 @@ def get_most_active():
     return jsonify(results)
 
 @market_data_bp.route('/stock/search', methods=['GET'])
-def search_stocks():
-    """Advanced stock search with filters"""
-    query = request.args.get('query', '').upper()
-    sector = request.args.get('sector', '')
-    min_market_cap = request.args.get('min_market_cap', type=float)
-    max_market_cap = request.args.get('max_market_cap', type=float)
+def search_stocks_alpha():
+    """Search for stocks using Alpha Vantage API"""
+    query = request.args.get('q', '')
+    if not query:
+        return jsonify({'error': 'Query parameter is required'}), 400
     
-    cache_key = f"stock_search_{query}_{sector}_{min_market_cap}_{max_market_cap}"
-    cached_data = get_cached_data(cache_key, expiry_minutes=15)
+    cache_key = f"search_{query}"
+    cached_data = get_cached_data(cache_key)
     if cached_data:
         return jsonify(cached_data)
     
-    # Get list of stocks from NSE
-    url = "https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%2050"
-    headers = {
-        'User-Agent': 'Mozilla/5.0',
-        'Accept': 'application/json'
-    }
+    url = f"https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords={query}&apikey={ALPHA_VANTAGE_API_KEY}"
+    response = requests.get(url)
     
-    try:
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            data = response.json()
-            stocks = data.get('data', [])
-            
-            # Apply filters
-            filtered_stocks = []
-            for stock in stocks:
-                if query and query not in stock['symbol'] and query not in stock['companyName']:
-                    continue
-                    
-                if sector and sector.lower() not in stock.get('sector', '').lower():
-                    continue
-                    
-                market_cap = float(stock.get('marketCap', 0))
-                if min_market_cap and market_cap < min_market_cap:
-                    continue
-                if max_market_cap and market_cap > max_market_cap:
-                    continue
-                
-                filtered_stocks.append({
-                    'symbol': stock['symbol'],
-                    'name': stock['companyName'],
-                    'sector': stock.get('sector', ''),
-                    'market_cap': market_cap,
-                    'last_price': float(stock.get('lastPrice', 0)),
-                    'change': float(stock.get('pChange', 0)),
-                    'volume': int(stock.get('totalTradedVolume', 0))
-                })
-            
-            set_cached_data(cache_key, filtered_stocks)
-            return jsonify(filtered_stocks)
-    except Exception as e:
-        print(f"Error in stock search: {e}")
-        return jsonify({'error': 'Failed to fetch stock data'}), 500
+    if response.status_code != 200:
+        return jsonify({'error': 'Failed to fetch data from Alpha Vantage'}), 500
+    
+    data = response.json()
+    
+    # Check for API errors
+    if 'Error Message' in data:
+        return jsonify({'error': data['Error Message']}), 500
+    
+    if 'Note' in data:
+        return jsonify({'error': 'API rate limit reached. Please try again later.'}), 429
+    
+    # Filter for Indian stocks (NSE/BSE)
+    if 'bestMatches' in data:
+        indian_stocks = [stock for stock in data['bestMatches'] 
+                        if stock['4. region'] == 'India' or 
+                           '.BSE' in stock['1. symbol'] or 
+                           '.NSE' in stock['1. symbol']]
+        data['bestMatches'] = indian_stocks
+        set_cached_data(cache_key, data)
+        return jsonify(data)
+    else:
+        return jsonify({'bestMatches': [], 'message': 'No matching stocks found'})
 
 @market_data_bp.route('/stock/technical/<symbol>', methods=['GET'])
 def get_technical_indicators(symbol):
@@ -1185,38 +1167,42 @@ def get_market_overview():
         return jsonify({'error': 'Failed to fetch market overview'}), 500
 
 @market_data_bp.route('/market/search', methods=['GET'])
-def search_stocks():
+def search_stocks_yahoo():
+    """Search for stocks using Yahoo Finance API"""
+    query = request.args.get('q', '')
+    if not query:
+        return jsonify({'error': 'Query parameter is required'}), 400
+    
+    cache_key = f"yahoo_search_{query}"
+    cached_data = get_cached_data(cache_key)
+    if cached_data:
+        return jsonify(cached_data)
+    
     try:
-        query = request.args.get('q', '')
-        if not query:
-            return jsonify([])
-            
-        # Use cached data if available
-        with cache_lock:
-            if query in market_data_cache:
-                return jsonify(market_data_cache[query])
+        # Use yfinance to search for stocks
+        tickers = yf.Tickers(query)
+        results = []
         
-        # Fetch new data
-        results = yf.Tickers(query).tickers
-        matches = []
+        for symbol, ticker in tickers.tickers.items():
+            try:
+                info = ticker.info
+                if info:
+                    results.append({
+                        'symbol': symbol,
+                        'name': info.get('longName', ''),
+                        'exchange': info.get('exchange', ''),
+                        'type': info.get('quoteType', ''),
+                        'currency': info.get('currency', '')
+                    })
+            except Exception as e:
+                print(f"Error fetching info for {symbol}: {e}")
+                continue
         
-        for symbol, ticker in results.items():
-            info = ticker.info
-            matches.append({
-                'symbol': symbol,
-                'name': info.get('longName', ''),
-                'type': info.get('quoteType', ''),
-                'region': info.get('market', '')
-            })
-        
-        # Cache results
-        with cache_lock:
-            market_data_cache[query] = matches
-            
-        return jsonify(matches)
+        data = {'results': results}
+        set_cached_data(cache_key, data)
+        return jsonify(data)
     except Exception as e:
-        print(f"Error searching stocks: {e}")
-        return jsonify({'error': 'Failed to search stocks'}), 500
+        return jsonify({'error': str(e)}), 500
 
 @market_data_bp.route('/market/stock/<symbol>', methods=['GET'])
 def get_stock_data_route(symbol):
