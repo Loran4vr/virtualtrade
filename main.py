@@ -184,6 +184,11 @@ def create_app():
         session['test'] = 'Hello, World!'
         return jsonify({'session': dict(session)})
     
+    # Add health check endpoint
+    @app.route('/api/health')
+    def health_check():
+        return jsonify({'status': 'ok'}), 200
+
     # Register blueprints
     app.register_blueprint(create_auth_blueprint(app), url_prefix='/auth')
     app.register_blueprint(market_data_bp, url_prefix='/api/market')
