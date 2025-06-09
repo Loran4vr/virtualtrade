@@ -97,8 +97,8 @@ export default function Market() {
       const response = await fetch(`/api/market/search?q=${encodeURIComponent(searchQuery)}`);
       const data = await response.json();
       console.log('Search results:', data);
-      if (Array.isArray(data)) {
-        setSearchResults(data);
+      if (data.bestMatches && Array.isArray(data.bestMatches)) {
+        setSearchResults(data.bestMatches);
       } else {
         setSearchResults([]);
       }
