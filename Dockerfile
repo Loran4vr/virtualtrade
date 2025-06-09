@@ -19,12 +19,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application
 COPY . .
 
-# Create static directory if it doesn't exist
-RUN mkdir -p static
-
-# Run database initialization script
-RUN python init_db.py
-
 # Use Node.js image for frontend
 FROM node:16-alpine as frontend-builder
 
@@ -67,6 +61,9 @@ RUN mkdir -p static
 ENV FLASK_APP=main.py
 ENV FLASK_ENV=production
 ENV PYTHONUNBUFFERED=1
+
+# Run database initialization script
+RUN python init_db.py
 
 # Expose port
 EXPOSE 5000
