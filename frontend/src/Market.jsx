@@ -25,6 +25,7 @@ import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import IconButton from '@mui/material/IconButton';
+import MarketOverview from './components/MarketOverview';
 
 export default function Market() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -220,7 +221,8 @@ export default function Market() {
 
   return (
     <Box sx={{ p: { xs: 1, md: 3 } }}>
-      <Grid container spacing={3}>
+      <MarketOverview />
+      <Grid container spacing={3} sx={{ mt: 2 }}>
         <Grid item xs={12} md={8}>
           <Card>
             <CardHeader title="Market Search" subheader="Search for stocks to trade" />

@@ -294,3 +294,125 @@ def get_stock_data(symbol):
     set_cached_data(cache_key, processed_data)
     return jsonify(processed_data)
 
+@market_data_bp.route('/indices', methods=['GET'])
+def get_indices():
+    """Get major Indian market indices"""
+    cache_key = "indices"
+    cached_data = get_cached_data(cache_key, expiry_minutes=5)  # Cache for 5 minutes
+    if cached_data:
+        return jsonify(cached_data)
+    
+    indices = {
+        'NIFTY 50': '^NSEI',
+        'SENSEX': '^BSESN',
+        'BANK NIFTY': '^NSEBANK',
+        'NIFTY IT': '^CNXIT',
+        'NIFTY PHARMA': '^CNXPHARMA',
+        'NIFTY AUTO': '^CNXAUTO',
+        'NIFTY FMCG': '^CNXFMCG',
+        'NIFTY METAL': '^CNXMETAL',
+        'NIFTY REALTY': '^CNXREALTY'
+    }
+    
+    results = {}
+    for name, symbol in indices.items():
+        try:
+            url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={symbol}&apikey={ALPHA_VANTAGE_API_KEY}"
+            response = requests.get(url)
+            if response.status_code == 200:
+                data = response.json()
+                if 'Global Quote' in data:
+                    quote = data['Global Quote']
+                    results[name] = {
+                        'price': float(quote.get('05. price', 0)),
+                        'change': float(quote.get('09. change', 0)),
+                        'change_percent': quote.get('10. change percent', '0%').replace('%', ''),
+                        'volume': int(quote.get('06. volume', 0))
+                    }
+        except Exception as e:
+            print(f"Error fetching {name}: {e}")
+            continue
+    
+    set_cached_data(cache_key, results)
+    return jsonify(results)
+
+@market_data_bp.route('/sectors', methods=['GET'])
+def get_sectors():
+    """Get sector performance"""
+    cache_key = "sectors"
+    cached_data = get_cached_data(cache_key, expiry_minutes=15)  # Cache for 15 minutes
+    if cached_data:
+        return jsonify(cached_data)
+    
+    sectors = {
+        'IT': ['TCS', 'INFY', 'WIPRO', 'HCLTECH', 'TECHM'],
+        'BANKING': ['HDFCBANK', 'ICICIBANK', 'KOTAKBANK', 'AXISBANK', 'SBIN'],
+        'PHARMA': ['SUNPHARMA', 'DRREDDY', 'CIPLA', 'LUPIN', 'AUROPHARMA'],
+        'AUTO': ['MARUTI', 'TATAMOTORS', 'M&M', 'HEROMOTOCO', 'BAJAJ-AUTO'],
+        'FMCG': ['HINDUNILVR', 'ITC', 'NESTLEIND', 'BRITANNIA', 'DABUR'],
+        'METAL': ['TATASTEEL', 'JSWSTEEL', 'HINDALCO', 'SAIL', 'JINDALSTEL'],
+        'REALTY': ['DLF', 'SUNTV', 'GODREJPROP', 'OBEROIRLTY', 'PRESTIGE']
+    }
+    
+    results = {}
+    for sector, stocks in sectors.items():
+        try:
+            sector_data = []
+            for stock in stocks:
+                url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={stock}.BSE&apikey={ALPHA_VANTAGE_API_KEY}"
+                response = requests.get(url)
+                if response.status_code == 200:
+                    data = response.json()
+                    if 'Global Quote' in data:
+                        quote = data['Global Quote']
+                        sector_data.append({
+                            'symbol': stock,
+                            'price': float(quote.get('05. price', 0)),
+                            'change': float(quote.get('09. change', 0)),
+                            'change_percent': quote.get('10. change percent', '0%').replace('%', '')
+                        })
+            
+            if sector_data:
+                avg_change = sum(float(stock['change_percent']) for stock in sector_data) / len(sector_data)
+                results[sector] = {
+                    'change_percent': round(avg_change, 2),
+                    'stocks': sector_data
+                }
+        except Exception as e:
+            print(f"Error fetching {sector} sector: {e}")
+            continue
+    
+    set_cached_data(cache_key, results)
+    return jsonify(results)
+
+@market_data_bp.route('/most-active', methods=['GET'])
+def get_most_active():
+    """Get most active stocks by volume"""
+    cache_key = "most_active"
+    cached_data = get_cached_data(cache_key, expiry_minutes=5)  # Cache for 5 minutes
+    if cached_data:
+        return jsonify(cached_data)
+    
+    url = f"https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey={ALPHA_VANTAGE_API_KEY}"
+    response = requests.get(url)
+    
+    if response.status_code != 200:
+        return jsonify({'error': 'Failed to fetch data'}), 500
+    
+    data = response.json()
+    results = {
+        'gainers': [],
+        'losers': [],
+        'most_active': []
+    }
+    
+    if 'top_gainers' in data:
+        results['gainers'] = data['top_gainers'][:5]
+    if 'top_losers' in data:
+        results['losers'] = data['top_losers'][:5]
+    if 'most_actively_traded' in data:
+        results['most_active'] = data['most_actively_traded'][:5]
+    
+    set_cached_data(cache_key, results)
+    return jsonify(results)
+
