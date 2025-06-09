@@ -99,6 +99,9 @@ export default function Market() {
       console.log('Search results:', data);
       if (data.bestMatches && Array.isArray(data.bestMatches)) {
         setSearchResults(data.bestMatches);
+      } else if (data.error) {
+        console.error('Search error:', data.error);
+        setSearchResults([]);
       } else {
         setSearchResults([]);
       }
@@ -231,9 +234,21 @@ export default function Market() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {searchResults.length === 0 ? (
+                    {searchLoading ? (
                       <TableRow>
-                        <TableCell colSpan={5} align="center">No results found</TableCell>
+                        <TableCell colSpan={5} align="center">
+                          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 2 }}>
+                            <CircularProgress size={24} />
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    ) : searchResults.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} align="center">
+                          <Typography variant="body2" color="text.secondary">
+                            {searchQuery ? 'No results found' : 'Enter a stock symbol or company name to search'}
+                          </Typography>
+                        </TableCell>
                       </TableRow>
                     ) : (
                       searchResults.map((stock) => (
