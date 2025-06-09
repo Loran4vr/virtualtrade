@@ -2,25 +2,26 @@ import multiprocessing
 import os
 
 # Server socket
-bind = "0.0.0.0:" + str(os.getenv("PORT", "5000"))
+bind = f"0.0.0.0:{os.environ.get('PORT', '5000')}"
 backlog = 2048
 
 # Worker processes
-workers = 2
-worker_class = 'sync'
+workers = multiprocessing.cpu_count() * 2 + 1
+worker_class = 'gthread'
+threads = 2
 worker_connections = 1000
 timeout = 30
 keepalive = 2
 
 # Logging
-accesslog = "-"  # Log to stdout
-errorlog = "-"   # Log to stderr
-loglevel = "debug"
+accesslog = '-'
+errorlog = '-'
+loglevel = 'info'
 capture_output = True
 enable_stdio_inheritance = True
 
 # Process naming
-proc_name = 'gunicorn_vta'
+proc_name = 'virtualtrade'
 
 # SSL
 keyfile = None
@@ -32,4 +33,14 @@ pidfile = None
 umask = 0
 user = None
 group = None
-tmp_upload_dir = None 
+tmp_upload_dir = None
+
+# Server hooks
+def on_starting(server):
+    pass
+
+def on_reload(server):
+    pass
+
+def on_exit(server):
+    pass 

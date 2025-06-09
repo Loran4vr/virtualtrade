@@ -55,4 +55,4 @@ ENV PYTHONPATH=/app:$PYTHONPATH
 EXPOSE 5000
 
 # Run the application with Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "2", "--timeout", "120", "--keep-alive", "5", "--max-requests", "1000", "--max-requests-jitter", "50", "main:application"] 
+CMD ["gunicorn", "--config", "gunicorn_config.py", "main:app"] 

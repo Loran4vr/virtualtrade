@@ -4,6 +4,7 @@ from flask_dance.contrib.google import make_google_blueprint, google
 import os
 import json
 import logging
+from flask_dance.consumer.oauth2 import OAuth
 
 print("##### DEBUG: auth.py file has been loaded and executed! #####")
 
@@ -55,4 +56,26 @@ def create_auth_blueprint():
         })
 
     return auth_bp
+
+def init_oauth(app):
+    oauth = OAuth(app)
+    
+    # Get the base URL from environment variable or default to localhost
+    base_url = os.environ.get('RENDER_EXTERNAL_URL', 'http://localhost')
+    
+    google = oauth.register(
+        name='google',
+        client_id=os.environ.get('GOOGLE_CLIENT_ID'),
+        client_secret=os.environ.get('GOOGLE_CLIENT_SECRET'),
+        access_token_url='https://accounts.google.com/o/oauth2/token',
+        access_token_params=None,
+        authorize_url='https://accounts.google.com/o/oauth2/auth',
+        authorize_params=None,
+        api_base_url='https://www.googleapis.com/oauth2/v1/',
+        client_kwargs={'scope': 'openid email profile'},
+        server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+        redirect_uri=f"{base_url}/auth/google/authorized"
+    )
+    
+    return google
 
