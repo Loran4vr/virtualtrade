@@ -14,8 +14,11 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  CircularProgress
+  CircularProgress,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
+import CandlestickChart from './components/CandlestickChart';
 
 export default function Market() {
   const [selectedTab, setSelectedTab] = useState(0);
@@ -23,6 +26,7 @@ export default function Market() {
   const [timeframe, setTimeframe] = useState('1D');
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [chartType, setChartType] = useState('candlestick');
 
   useEffect(() => {
     if (selectedSymbol) {
@@ -55,6 +59,12 @@ export default function Market() {
 
   const handleTimeframeChange = (event) => {
     setTimeframe(event.target.value);
+  };
+
+  const handleChartTypeChange = (event, newType) => {
+    if (newType !== null) {
+      setChartType(newType);
+    }
   };
 
   return (
@@ -92,23 +102,38 @@ export default function Market() {
               <Typography variant="h6">
                 {selectedSymbol} Chart
               </Typography>
-              <FormControl sx={{ minWidth: 120 }}>
-                <InputLabel>Timeframe</InputLabel>
-                <Select
-                  value={timeframe}
-                  label="Timeframe"
-                  onChange={handleTimeframeChange}
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <ToggleButtonGroup
+                  value={chartType}
+                  exclusive
+                  onChange={handleChartTypeChange}
+                  size="small"
                 >
-                  <MenuItem value="1m">1 Minute</MenuItem>
-                  <MenuItem value="5m">5 Minutes</MenuItem>
-                  <MenuItem value="15m">15 Minutes</MenuItem>
-                  <MenuItem value="30m">30 Minutes</MenuItem>
-                  <MenuItem value="1h">1 Hour</MenuItem>
-                  <MenuItem value="1D">1 Day</MenuItem>
-                  <MenuItem value="1W">1 Week</MenuItem>
-                  <MenuItem value="1M">1 Month</MenuItem>
-                </Select>
-              </FormControl>
+                  <ToggleButton value="candlestick">
+                    Candlestick
+                  </ToggleButton>
+                  <ToggleButton value="area">
+                    Area
+                  </ToggleButton>
+                </ToggleButtonGroup>
+                <FormControl sx={{ minWidth: 120 }}>
+                  <InputLabel>Timeframe</InputLabel>
+                  <Select
+                    value={timeframe}
+                    label="Timeframe"
+                    onChange={handleTimeframeChange}
+                  >
+                    <MenuItem value="1m">1 Minute</MenuItem>
+                    <MenuItem value="5m">5 Minutes</MenuItem>
+                    <MenuItem value="15m">15 Minutes</MenuItem>
+                    <MenuItem value="30m">30 Minutes</MenuItem>
+                    <MenuItem value="1h">1 Hour</MenuItem>
+                    <MenuItem value="1D">1 Day</MenuItem>
+                    <MenuItem value="1W">1 Week</MenuItem>
+                    <MenuItem value="1M">1 Month</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
             </Box>
 
             {loading ? (
@@ -116,7 +141,11 @@ export default function Market() {
                 <CircularProgress />
               </Box>
             ) : (
-              <Chart data={chartData} height={400} />
+              chartType === 'candlestick' ? (
+                <CandlestickChart data={chartData} height={400} />
+              ) : (
+                <Chart data={chartData} height={400} />
+              )
             )}
           </CardContent>
         </Card>
