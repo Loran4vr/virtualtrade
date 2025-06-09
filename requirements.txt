@@ -19,4 +19,5 @@ Jinja2>=3.0.1
 MarkupSafe>=2.0.1
 click>=8.0.1
 stripe>=7.0.0
+whitenoise>=6.6.0
 
