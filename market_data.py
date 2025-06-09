@@ -68,27 +68,13 @@ def search_symbol():
                            '.NSE' in stock['1. symbol']]
         print(f"Filtered Indian stocks: {indian_stocks}")
         
-        # Format the response
-        formatted_results = []
-        for stock in indian_stocks:
-            formatted_results.append({
-                'symbol': stock['1. symbol'],
-                'name': stock['2. name'],
-                'type': stock['3. type'],
-                'region': stock['4. region'],
-                'marketOpen': stock['5. marketOpen'],
-                'marketClose': stock['6. marketClose'],
-                'timezone': stock['7. timezone'],
-                'currency': stock['8. currency'],
-                'matchScore': float(stock['9. matchScore'])
-            })
-        
-        print(f"Returning {len(formatted_results)} formatted results")
-        set_cached_data(cache_key, formatted_results)
-        return jsonify(formatted_results)
+        # Return the filtered bestMatches array
+        data['bestMatches'] = indian_stocks
+        set_cached_data(cache_key, data)
+        return jsonify(data)
     else:
         print("No bestMatches found in response")
-        return jsonify([])
+        return jsonify({'bestMatches': []})
 
 @market_data_bp.route('/quote', methods=['GET'])
 def get_quote():
