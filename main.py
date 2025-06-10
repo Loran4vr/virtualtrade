@@ -115,9 +115,13 @@ def create_app():
         logger.error(f"Error registering auth blueprint: {str(e)}")
         raise
     
-    # Initialize Stripe
+    # Initialize Stripe (only if keys are available)
     logger.info("Initializing Stripe...")
-    stripe.api_key = app.config['STRIPE_SECRET_KEY']
+    if app.config.get('STRIPE_SECRET_KEY'):
+        stripe.api_key = app.config['STRIPE_SECRET_KEY']
+        logger.info("Stripe initialized successfully")
+    else:
+        logger.warning("Stripe secret key not found, payment features will be disabled")
     
     # Register blueprints
     logger.info("Registering blueprints...")
