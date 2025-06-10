@@ -115,8 +115,7 @@ def create_app():
         client_id=app.config['GOOGLE_CLIENT_ID'],
         client_secret=app.config['GOOGLE_CLIENT_SECRET'],
         scope=['profile', 'email'],
-        redirect_url='/authorized',  # Relative to the blueprint's mount point
-        name='auth.google'  # Set the blueprint name to match the expected URL structure
+        redirect_url='/authorized'  # Relative to the blueprint's mount point
     )
 
     # Register Google blueprint with the app (setting its URL prefix)
