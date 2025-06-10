@@ -9,16 +9,12 @@ from models import db, User  # Import db from models.py
 from datetime import datetime, timedelta, time, date
 from decimal import Decimal
 from functools import wraps
-from flask_dance.contrib.google import make_google_blueprint, google
-from flask_dance.consumer import oauth_authorized
-from flask_dance.consumer.storage.session import SessionStorage
-from sqlalchemy.orm.exc import NoResultFound
+from flask_login import LoginManager
 import logging
 from backend.subscription import init_stripe, SUBSCRIPTION_PLANS
 from whitenoise import WhiteNoise
 import requests
 from flask_cors import CORS
-from flask_login import LoginManager
 import gc
 import stripe
 
@@ -110,7 +106,7 @@ def create_app():
     logger.info("Initializing Google OAuth...")
     try:
         app.register_blueprint(create_auth_blueprint(app), url_prefix='/auth')
-        logger.info("Google OAuth blueprint registered")
+        logger.info("Auth blueprint registered")
     except Exception as e:
         logger.error(f"Error registering auth blueprint: {str(e)}")
         raise
