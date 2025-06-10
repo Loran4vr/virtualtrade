@@ -108,11 +108,15 @@ def create_app():
         client_id=app.config['GOOGLE_CLIENT_ID'],
         client_secret=app.config['GOOGLE_CLIENT_SECRET'],
         scope=['profile', 'email'],
-        redirect_url='/authorized'  # Relative to its own blueprint prefix
+        # Set redirect_url to just the path part after the blueprint's url_prefix
+        # This will be /auth/google/authorized
+        redirect_url='/authorized',
+        # Explicitly set the url_prefix for this blueprint here
+        url_prefix='/auth/google'
     )
 
     # Register Google blueprint with the app
-    app.register_blueprint(google_bp, url_prefix='/auth/google')
+    app.register_blueprint(google_bp) # DO NOT specify url_prefix here, as it's already in make_google_blueprint
     logger.info("Google OAuth blueprint registered")
 
     # Register the main auth blueprint
