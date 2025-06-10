@@ -22,7 +22,10 @@ def create_auth_blueprint(app):
     base_url = app.config.get('RENDER_EXTERNAL_URL', 'http://localhost:5000')
     logger.debug(f"Using base URL: {base_url}")
     
-    # Create Google OAuth blueprint with correct redirect URI
+    # Create auth blueprint
+    auth_bp = Blueprint('auth', __name__)
+    
+    # Create Google OAuth blueprint
     google_bp = make_google_blueprint(
         client_id=app.config['GOOGLE_CLIENT_ID'],
         client_secret=app.config['GOOGLE_CLIENT_SECRET'],
@@ -30,8 +33,9 @@ def create_auth_blueprint(app):
         redirect_url='/auth/google/authorized'
     )
     
-    # Create auth blueprint
-    auth_bp = Blueprint('auth', __name__)
+    # Register Google blueprint first
+    app.register_blueprint(google_bp, url_prefix='/auth/google')
+    logger.debug("Google OAuth blueprint registered")
     
     @auth_bp.route('/login')
     def login():
@@ -93,10 +97,6 @@ def create_auth_blueprint(app):
         login_user(user)
         logger.debug(f"User logged in successfully: {user.email}")
         return redirect('/')
-    
-    # Register blueprints
-    app.register_blueprint(google_bp, url_prefix='/auth/google')
-    logger.debug("Google OAuth blueprint registered")
     
     return auth_bp
 
