@@ -116,12 +116,11 @@ def create_app():
         client_secret=app.config['GOOGLE_CLIENT_SECRET'],
         scope=['profile', 'email'],
         redirect_url='/authorized',  # Relative to the blueprint's mount point
-        base_url=external_base_url, # Explicitly tell Flask-Dance the base URL
         name='auth.google'  # Set the blueprint name to match the expected URL structure
     )
 
-    # Register Google blueprint with the app (no url_prefix needed)
-    app.register_blueprint(google_bp)
+    # Register Google blueprint with the app (setting its URL prefix)
+    app.register_blueprint(google_bp, url_prefix='/auth/google')
     logger.info("Google OAuth blueprint registered")
 
     # Register the main auth blueprint
