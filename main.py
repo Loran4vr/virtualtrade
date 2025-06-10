@@ -46,6 +46,7 @@ def create_app():
     
     # Initialize logging
     logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
     logger.info("Starting application initialization...")
     
     # Log environment variables
@@ -54,7 +55,7 @@ def create_app():
         logger.debug(f"  {key}={value}")
     
     # Create Flask app
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder='static', static_url_path='')
     
     # Load configuration
     env = os.environ.get('FLASK_ENV', 'production')
@@ -66,7 +67,6 @@ def create_app():
         app.config.from_object('config.ProductionConfig')
     
     # Configure static files
-    app.static_folder = 'static'
     logger.debug(f"Static folder: {app.static_folder}")
     
     # Configure session cookie
