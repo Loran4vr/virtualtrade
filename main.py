@@ -54,6 +54,9 @@ def create_app():
     # Create Flask app
     app = Flask(__name__, static_folder='static', static_url_path='')
     
+    # Set preferred URL scheme to HTTPS for Render deployments
+    app.config['PREFERRED_URL_SCHEME'] = 'https'
+
     # Load configuration
     env = os.environ.get('FLASK_ENV', 'production')
     logger.info(f"Loading Flask configuration: {env}")
@@ -103,21 +106,16 @@ def create_app():
         raise ValueError("SECRET_KEY must be set")
     logger.debug(f"SECRET_KEY loaded. Length: {len(app.config['SECRET_KEY'])}. Masked: {app.config['SECRET_KEY'][:5]}...{app.config['SECRET_KEY'][-5:]}")
 
-    # Construct the absolute authorized redirect URI for Google OAuth
-    render_external_url = app.config.get('RENDER_EXTERNAL_URL', 'http://localhost:5000')
-    google_authorized_redirect_uri = f"{render_external_url}/auth/google/authorized"
-    logger.debug(f"Google OAuth make_google_blueprint redirect_url: {google_authorized_redirect_uri}")
-
-    # Create Google OAuth blueprint directly in main.py
+    # Create Google OAuth blueprint directly in main.py (standard Flask-Dance pattern)
     google_bp = make_google_blueprint(
         client_id=app.config['GOOGLE_CLIENT_ID'],
         client_secret=app.config['GOOGLE_CLIENT_SECRET'],
         scope=['profile', 'email'],
-        redirect_url=google_authorized_redirect_uri # Set the full absolute URI here
+        redirect_url='/authorized'  # Relative to the blueprint's mount point
     )
 
-    # Register Google blueprint with the app (no url_prefix needed here, as redirect_url is absolute)
-    app.register_blueprint(google_bp)
+    # Register Google blueprint with the app (setting its URL prefix)
+    app.register_blueprint(google_bp, url_prefix='/auth/google')
     logger.info("Google OAuth blueprint registered")
 
     # Register the main auth blueprint
