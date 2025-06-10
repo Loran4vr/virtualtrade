@@ -30,7 +30,7 @@ def create_auth_blueprint(app):
         client_id=app.config['GOOGLE_CLIENT_ID'],
         client_secret=app.config['GOOGLE_CLIENT_SECRET'],
         scope=['profile', 'email'],
-        redirect_url='/auth/google/authorized'
+        redirect_url='/authorized'
     )
     
     # Register Google blueprint first

@@ -9,7 +9,6 @@ class Config:
     """Base configuration."""
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///site.db')
     STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
     STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
     GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
@@ -20,6 +19,10 @@ class Config:
     SESSION_COOKIE_SAMESITE = 'None'
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
 
+    @property
+    def SQLALCHEMY_DATABASE_URI(self):
+        return os.environ.get('DATABASE_URL', 'sqlite:///site.db')
+
 class DevelopmentConfig(Config):
     """Development configuration."""
     DEBUG = True
@@ -29,12 +32,7 @@ class ProductionConfig(Config):
     """Production configuration."""
     DEBUG = False
     # Ensure database URL is properly formatted for PostgreSQL
-    @property
-    def SQLALCHEMY_DATABASE_URI(self):
-        uri = os.environ.get('DATABASE_URL')
-        if uri and uri.startswith('postgres://'):
-            uri = uri.replace('postgres://', 'postgresql://', 1)
-        return uri or 'sqlite:///site.db'
+    SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI
 
 # Configuration dictionary
 config = {
