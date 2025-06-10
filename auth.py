@@ -22,6 +22,10 @@ def create_auth_blueprint(app):
     base_url = app.config.get('RENDER_EXTERNAL_URL', 'http://localhost:5000')
     logger.debug(f"Using base URL: {base_url}")
     
+    # Construct the full authorized redirect URI
+    full_redirect_uri = f"{base_url}/auth/google/authorized"
+    logger.debug(f"Setting Google OAuth redirect URL to: {full_redirect_uri}")
+
     # Create auth blueprint
     auth_bp = Blueprint('auth', __name__)
     
@@ -30,7 +34,7 @@ def create_auth_blueprint(app):
         client_id=app.config['GOOGLE_CLIENT_ID'],
         client_secret=app.config['GOOGLE_CLIENT_SECRET'],
         scope=['profile', 'email'],
-        redirect_url='/authorized'
+        redirect_url=full_redirect_uri # Use the full, absolute URL here
     )
     
     # Register Google blueprint first
