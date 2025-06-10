@@ -17,6 +17,7 @@ import requests
 from flask_cors import CORS
 import gc
 import stripe
+from flask_dance.contrib.google import make_google_blueprint, google # Import make_google_blueprint and google
 
 print("##### DEBUG: main.py file has been loaded and executed! #####")
 
@@ -102,15 +103,49 @@ def create_app():
         raise ValueError("SECRET_KEY must be set")
     logger.debug(f"SECRET_KEY loaded. Length: {len(app.config['SECRET_KEY'])}. Masked: {app.config['SECRET_KEY'][:5]}...{app.config['SECRET_KEY'][-5:]}")
     
-    # Initialize Google OAuth
-    logger.info("Initializing Google OAuth...")
-    try:
-        app.register_blueprint(create_auth_blueprint(app), url_prefix='/auth')
-        logger.info("Auth blueprint registered")
-    except Exception as e:
-        logger.error(f"Error registering auth blueprint: {str(e)}")
-        raise
+    # Create Google OAuth blueprint directly in main.py
+    google_bp = make_google_blueprint(
+        client_id=app.config['GOOGLE_CLIENT_ID'],
+        client_secret=app.config['GOOGLE_CLIENT_SECRET'],
+        scope=['profile', 'email'],
+        redirect_url='/authorized'  # Relative to its own blueprint prefix
+    )
+
+    # Register Google blueprint with the app
+    app.register_blueprint(google_bp, url_prefix='/auth/google')
+    logger.info("Google OAuth blueprint registered")
+
+    # Register the main auth blueprint
+    logger.info("Registering authentication blueprint...")
+    app.register_blueprint(create_auth_blueprint(app), url_prefix='/auth')
+    logger.info("Auth blueprint registered")
     
+    # Handle Google OAuth callback directly in main.py
+    @google_bp.route('/authorized')
+    def authorized():
+        if not google.authorized:
+            return redirect(url_for('auth.login'))
+        
+        resp = google.get('/oauth2/v2/userinfo')
+        if not resp.ok:
+            return redirect(url_for('auth.login'))
+        
+        google_info = resp.json()
+        google_user_id = str(google_info['id'])
+        
+        user = User.query.filter_by(google_id=google_user_id).first()
+        if not user:
+            user = User(
+                google_id=google_user_id,
+                email=google_info['email'],
+                name=google_info.get('name', '')
+            )
+            db.session.add(user)
+            db.session.commit()
+        
+        login_user(user)
+        return redirect('/')
+
     # Initialize Stripe (only if keys are available)
     logger.info("Initializing Stripe...")
     if app.config.get('STRIPE_SECRET_KEY'):
@@ -119,8 +154,8 @@ def create_app():
     else:
         logger.warning("Stripe secret key not found, payment features will be disabled")
     
-    # Register blueprints
-    logger.info("Registering blueprints...")
+    # Register other blueprints
+    logger.info("Registering other blueprints...")
     try:
         app.register_blueprint(market_data_bp, url_prefix='/api/market')
         logger.info("Market data blueprint registered")
