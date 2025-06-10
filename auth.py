@@ -27,15 +27,14 @@ def create_auth_blueprint(app):
     
     # Create Google OAuth blueprint
     google_bp = make_google_blueprint(
-        client_id=os.environ.get('GOOGLE_CLIENT_ID'),
-        client_secret=os.environ.get('GOOGLE_CLIENT_SECRET'),
-        scope=['openid', 'email', 'profile'],
-        redirect_url=f"{base_url}/auth/google/authorized",
-        authorized_url="/auth/google/authorized"  # This is the path relative to the blueprint
+        client_id=app.config['GOOGLE_CLIENT_ID'],
+        client_secret=app.config['GOOGLE_CLIENT_SECRET'],
+        scope=['profile', 'email'],
+        redirect_url='/auth/google/authorized'
     )
     
     # Register the Google blueprint with a unique name
-    app.register_blueprint(google_bp, url_prefix='/auth/google', name='google_oauth')
+    app.register_blueprint(google_bp, url_prefix='/auth/google', name='google_oauth_bp')
     logger.debug("Google OAuth blueprint registered")
     
     @auth_bp.route('/login')
@@ -45,7 +44,7 @@ def create_auth_blueprint(app):
             logger.debug(f"User already authenticated: {current_user.email}")
             return redirect(url_for('main.index'))
         logger.debug("Redirecting to Google OAuth login")
-        return redirect(url_for('google_oauth.login'))
+        return redirect(url_for('google_oauth_bp.login'))
     
     @auth_bp.route('/logout')
     @login_required
