@@ -13,43 +13,37 @@ logger = logging.getLogger(__name__)
 print("##### DEBUG: auth.py file has been loaded and executed! #####")
 
 def create_auth_blueprint(app):
-    # Get the base URL from environment variable or default to localhost
-    is_production = os.environ.get('FLASK_ENV') == 'production'
-    if is_production:
-        base_url = 'https://virtualtrade.onrender.com'
-    else:
-        base_url = 'http://localhost:5000'
+    """Create and configure the authentication blueprint."""
+    # Log environment
+    env = app.config.get('FLASK_ENV', 'production')
+    logger.debug(f"Environment: {env}")
     
-    logger.debug(f"Environment: {'Production' if is_production else 'Development'}")
+    # Get base URL from environment
+    base_url = app.config.get('RENDER_EXTERNAL_URL', 'http://localhost:5000')
     logger.debug(f"Using base URL: {base_url}")
     
-    auth_bp = Blueprint('auth', __name__)
-    
-    # Create Google OAuth blueprint
+    # Create Google OAuth blueprint with correct redirect URI
     google_bp = make_google_blueprint(
         client_id=app.config['GOOGLE_CLIENT_ID'],
         client_secret=app.config['GOOGLE_CLIENT_SECRET'],
         scope=['profile', 'email'],
-        redirect_url='/auth/google/google/authorized'
+        redirect_url='/auth/google/authorized'  # Changed from /auth/google/google/authorized
     )
     
-    # Register the Google blueprint with a unique name
-    app.register_blueprint(google_bp, url_prefix='/auth/google')
-    logger.debug("Google OAuth blueprint registered")
+    # Create auth blueprint
+    auth_bp = Blueprint('auth', __name__)
     
     @auth_bp.route('/login')
     def login():
+        """Redirect to Google OAuth login."""
         logger.debug("Login route accessed")
-        if current_user.is_authenticated:
-            logger.debug(f"User already authenticated: {current_user.email}")
-            return redirect(url_for('main.index'))
         logger.debug("Redirecting to Google OAuth login")
         return redirect(url_for('google.login'))
     
     @auth_bp.route('/logout')
     @login_required
     def logout():
-        logger.debug(f"Logout requested for user: {current_user.email}")
+        """Log out the current user."""
         logout_user()
         return redirect(url_for('auth.login'))
     
@@ -98,7 +92,11 @@ def create_auth_blueprint(app):
         
         login_user(user)
         logger.debug(f"User logged in successfully: {user.email}")
-        return redirect(url_for('main.index'))
+        return redirect('/')
+    
+    # Register blueprints
+    app.register_blueprint(google_bp, url_prefix='/auth/google')
+    logger.debug("Google OAuth blueprint registered")
     
     return auth_bp
 
