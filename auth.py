@@ -3,7 +3,6 @@ import os
 import logging
 from flask import Blueprint, redirect, url_for, session, request, flash, jsonify, current_app
 from flask_login import login_user, logout_user, login_required, current_user
-from flask_dance.contrib.google import make_google_blueprint, google
 from models import User, db
 
 # Configure logging
@@ -25,23 +24,12 @@ def create_auth_blueprint(app):
     # Create auth blueprint
     auth_bp = Blueprint('auth', __name__)
     
-    # Create Google OAuth blueprint
-    google_bp = make_google_blueprint(
-        client_id=app.config['GOOGLE_CLIENT_ID'],
-        client_secret=app.config['GOOGLE_CLIENT_SECRET'],
-        scope=['profile', 'email'],
-        redirect_url='/authorized' # Back to relative path, to be handled by nested blueprint
-    )
-    
-    # Register Google blueprint as a sub-blueprint of auth_bp
-    auth_bp.register_blueprint(google_bp, url_prefix='/google')
-    logger.debug("Google OAuth blueprint registered as sub-blueprint")
-    
     @auth_bp.route('/login')
     def login():
         """Redirect to Google OAuth login."""
         logger.debug("Login route accessed")
         logger.debug("Redirecting to Google OAuth login")
+        # Now, we redirect to the Google OAuth login route defined in main.py's google_bp
         return redirect(url_for('google.login'))
     
     @auth_bp.route('/logout')
@@ -64,39 +52,6 @@ def create_auth_blueprint(app):
         return jsonify({
             'is_authenticated': False
         })
-    
-    @google_bp.route('/authorized')
-    def authorized():
-        """Handle Google OAuth callback."""
-        if not google.authorized:
-            return redirect(url_for('auth.login'))
-        
-        resp = google.get('/oauth2/v2/userinfo')
-        if not resp.ok:
-            return redirect(url_for('auth.login'))
-        
-        google_info = resp.json()
-        google_user_id = str(google_info['id'])
-        
-        # Get or create user
-        user = User.query.filter_by(google_id=google_user_id).first()
-        if not user:
-            logger.debug(f"Creating new user for Google ID: {google_user_id}")
-            user = User(
-                google_id=google_user_id,
-                email=google_info['email'],
-                name=google_info.get('name', ''),
-                picture=google_info.get('picture', '')
-            )
-            db.session.add(user)
-            db.session.commit()
-            logger.debug(f"Created new user: {user.email}")
-        else:
-            logger.debug(f"Found existing user: {user.email}")
-        
-        login_user(user)
-        logger.debug(f"User logged in successfully: {user.email}")
-        return redirect('/')
     
     return auth_bp
 
