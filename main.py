@@ -106,16 +106,22 @@ def create_app():
         raise ValueError("SECRET_KEY must be set")
     logger.debug(f"SECRET_KEY loaded. Length: {len(app.config['SECRET_KEY'])}. Masked: {app.config['SECRET_KEY'][:5]}...{app.config['SECRET_KEY'][-5:]}")
 
+    # Determine the external URL for Flask-Dance's base_url parameter
+    external_base_url = app.config.get('RENDER_EXTERNAL_URL', 'http://localhost:5000')
+    logger.debug(f"Flask-Dance base_url set to: {external_base_url}")
+
     # Create Google OAuth blueprint directly in main.py (standard Flask-Dance pattern)
     google_bp = make_google_blueprint(
         client_id=app.config['GOOGLE_CLIENT_ID'],
         client_secret=app.config['GOOGLE_CLIENT_SECRET'],
         scope=['profile', 'email'],
-        redirect_url='/authorized'  # Relative to the blueprint's mount point
+        redirect_url='/authorized',  # Relative to the blueprint's mount point
+        base_url=external_base_url, # Explicitly tell Flask-Dance the base URL
+        name='auth.google'  # Set the blueprint name to match the expected URL structure
     )
 
-    # Register Google blueprint with the app (setting its URL prefix)
-    app.register_blueprint(google_bp, url_prefix='/auth/google')
+    # Register Google blueprint with the app (no url_prefix needed)
+    app.register_blueprint(google_bp)
     logger.info("Google OAuth blueprint registered")
 
     # Register the main auth blueprint
